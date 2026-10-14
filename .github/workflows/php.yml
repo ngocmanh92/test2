@@ -1,23 +1,43 @@
 name: PHP checks
-on: [push, pull_request]
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-      - run: find app bin public -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: PHP lint
+        shell: bash
+        run: find app bin public -name '*.php' -print0 | xargs -0 -n1 php -l
       - name: HTTP checks
+        shell: bash
         run: |
           php -S 127.0.0.1:8080 -t public > /tmp/nhip-tin-server.log 2>&1 &
           server_pid=$!
-          trap 'kill "$server_pid"' EXIT
-          for attempt in 1 2 3 4 5; do
-            if curl --fail --silent http://127.0.0.1:8080/ > /dev/null; then break; fi
+          cleanup() {
+            result=$?
+            trap - EXIT
+            if [ "$result" -ne 0 ]; then cat /tmp/nhip-tin-server.log; fi
+            kill "$server_pid" 2>/dev/null || true
+            wait "$server_pid" 2>/dev/null || true
+            exit "$result"
+          }
+          trap cleanup EXIT
+          ready=false
+          for attempt in {1..20}; do
+            if curl --fail --silent --connect-timeout 1 --max-time 2 http://127.0.0.1:8080/ > /dev/null; then ready=true; break; fi
+            if ! kill -0 "$server_pid" 2>/dev/null; then break; fi
             sleep 1
           done
+          if [ "$ready" != true ]; then
+            echo '::error::PHP server failed to become ready'
+            exit 1
+          fi
           python3 tests/smoke.py
           printf "ci-admin\nci-test-password-123\n" | php bin/create-admin.php
           python3 tests/admin.py

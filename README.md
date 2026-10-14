@@ -39,7 +39,8 @@ GitHub Pages không chạy PHP. PHP built-in server chỉ dùng phát triển.
 
 ## Kiểm tra và giới hạn
 GitHub Actions lint mọi tệp PHP, chạy smoke test và kiểm tra đăng nhập, CSRF, nháp/đăng, XSS, đăng xuất.
-Môi trường tạo bản này chưa có PHP nên chưa chạy được kiểm tra runtime tại chỗ; cần xem kết quả Actions trước khi triển khai.
+Đã xác minh lượt chạy [PHP checks #1](https://github.com/ngocmanh92/test2/actions/runs/38387541021) cho commit `b907455`: lint 4 tệp PHP, smoke test và quản trị đều pass trên PHP 8.2.34. Môi trường chỉnh sửa hiện chưa có PHP; runtime được xác minh bằng GitHub Actions. Luôn kiểm tra lượt chạy của commit mới nhất trước khi triển khai.
+Workflow giới hạn 5 phút, chờ server tối đa 20 lần với timeout mỗi request, in log server khi lỗi và dọn tiến trình khi kết thúc. HTTP test có timeout 10 giây; có thể chạy thủ công qua workflow_dispatch.
 Chưa có upload ảnh, xóa bài, quản lý danh mục, nhiều tài khoản hay giới hạn đăng nhập. Trước khi mở quản trị ra Internet, thêm rate limit ở ứng dụng hoặc hosting.
 JSON có khóa để tránh ghi đồng thời, nhưng không thay thế cơ sở dữ liệu và backup. Sao lưu trước khi dùng thật; chuyển MySQL khi mở rộng.
 

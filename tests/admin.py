@@ -5,7 +5,7 @@ base = 'http://127.0.0.1:8080/'
 opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
 def request(path, data=None):
     try:
-        response = opener.open(base + path, urllib.parse.urlencode(data).encode() if data else None)
+        response = opener.open(base + path, urllib.parse.urlencode(data).encode() if data else None, timeout=10)
     except urllib.error.HTTPError as exc:
         response = exc
     with response:

@@ -8,7 +8,7 @@ BASE = 'http://127.0.0.1:8080/'
 def get(params=None):
     request = urllib.request.Request(BASE + ('?' + urllib.parse.urlencode(params) if params else ''))
     try:
-        response = urllib.request.urlopen(request)
+        response = urllib.request.urlopen(request, timeout=10)
     except urllib.error.HTTPError as error:
         response = error
     with response:
