@@ -1,0 +1,27 @@
+name: PHP Shop checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: php-shop
+    strategy:
+      matrix:
+        php: ['8.2', '8.3', '8.4']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: pdo_sqlite
+          coverage: none
+      - name: Syntax check
+        run: find app public bin tests -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Integration tests
+        run: php tests/run.php
+      - name: HTTP smoke tests
+        run: python3 tests/smoke.py

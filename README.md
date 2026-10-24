@@ -1,3 +1,10 @@
+# Các dự án trong test2
+
+- **Website bán hàng Mộc Shop:** [php-shop/](php-shop/README.md). Chạy `cd php-shop` trước khi cài đặt. Document root: `php-shop/public/`.
+- **Website tin tức Nhịp Tin:** mã nguồn ở thư mục gốc, hướng dẫn bên dưới.
+
+---
+
 # Nhịp Tin — Website tin tức PHP
 
 Mã nguồn khởi đầu bằng PHP 8.2+, không cần Composer. Dữ liệu JSON phù hợp prototype nhỏ.
