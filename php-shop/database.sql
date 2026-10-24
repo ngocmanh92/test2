@@ -8,3 +8,7 @@ CREATE TABLE order_items(id INTEGER PRIMARY KEY,order_id INTEGER NOT NULL REFERE
 CREATE TABLE login_attempts(email TEXT PRIMARY KEY,attempts INTEGER NOT NULL DEFAULT 0,locked_until INTEGER NOT NULL DEFAULT 0);
 CREATE INDEX products_category ON products(category_id,active);
 CREATE INDEX orders_user ON orders(user_id,created_at);
+
+CREATE TABLE IF NOT EXISTS quote_requests(id INTEGER PRIMARY KEY,product_id INTEGER REFERENCES products(id),name TEXT NOT NULL,phone TEXT NOT NULL,material TEXT NOT NULL,dimensions TEXT NOT NULL,location TEXT NOT NULL,notes TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'new' CHECK(status IN('new','contacted','quoted','closed')),created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
+
+CREATE TABLE IF NOT EXISTS site_settings(key TEXT PRIMARY KEY,value TEXT NOT NULL);

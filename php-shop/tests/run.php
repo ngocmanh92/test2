@@ -3,6 +3,7 @@ declare(strict_types=1);
 $file=sys_get_temp_dir().'/shop-test-'.bin2hex(random_bytes(8)).'.sqlite';
 putenv('SHOP_DB='.$file); putenv('ADMIN_EMAIL=admin@example.test'); putenv('ADMIN_PASSWORD=test-password-123456');
 require __DIR__.'/../bin/install.php';
+query('UPDATE products SET price=590000,stock=30 WHERE id=1');
 function check(bool $v,string $label): void { if(!$v) throw new RuntimeException('FAIL '.$label); echo 'PASS '.$label."\n"; }
 try {
     query('INSERT INTO users(name,email,password) VALUES(?,?,?)',['Customer','customer@example.test',password_hash('long-password-123',PASSWORD_DEFAULT)]);

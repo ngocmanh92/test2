@@ -5,6 +5,7 @@ from pathlib import Path
 import re
 import secrets
 import socket
+import sqlite3
 import subprocess
 import tempfile
 import time
@@ -16,6 +17,8 @@ root = Path(__file__).resolve().parents[1]
 with tempfile.TemporaryDirectory() as tmp:
     env = dict(os.environ, SHOP_DB=tmp+'/test.sqlite', ADMIN_EMAIL='admin@example.test', ADMIN_PASSWORD=secrets.token_urlsafe(20))
     subprocess.run(['php', str(root/'bin/install.php')], env=env, check=True)
+    with sqlite3.connect(env['SHOP_DB']) as db:
+        db.execute('UPDATE products SET price=590000,stock=30 WHERE id=1')
     with socket.socket() as sock:
         sock.bind(('127.0.0.1', 0))
         port = sock.getsockname()[1]
@@ -58,9 +61,27 @@ with tempfile.TemporaryDirectory() as tmp:
                 assert request(admin, '/?page=admin&tab='+tab)[0] == 200
             assert post(admin,'status',dict(id=1,status='cancelled'))[0] == 200
             assert post(admin,'product',dict(id=0,category_id=1,name='<script>alert(1)</script>',description='Test',price=10000,stock=10,image='',active=1))[0] == 200
-            html=request(buyer)[1]
+            html=request(admin, '/?page=admin&tab=products')[1]
             assert '&lt;script&gt;alert(1)&lt;/script&gt;' in html and '<script>alert(1)</script>' not in html
-            print('PASS HTTP: CSRF, registration, roles, cart, checkout, order ownership, admin pages, cancellation, XSS escaping')
+            assert request(buyer, '/?page=quote')[0] == 200
+            status, html, _ = post(buyer, 'quote', dict(product_id=1,name='Quote Buyer',phone='0901234567',material='Đá trắng',dimensions='Cao 120 cm',location='Đà Nẵng',notes='Cần tư vấn bệ tượng',consent=1), '/?page=quote')
+            assert status == 200 and 'Đã nhận yêu cầu' in html
+            html=request(admin, '/?page=admin&tab=quotes')[1]
+            assert 'Quote Buyer' in html and 'Cần tư vấn bệ tượng' in html
+            for route in ['artist','services','about','process','contact']:
+                status, html, _ = request(buyer, '/?page='+route)
+                assert status == 200 and 'Fatal error' not in html
+            assert 'Người gửi hồn vào Đá' in re.sub(r'<[^>]+>', ' ', request(buyer)[1]).replace('vào  Đá', 'vào Đá')
+            assert post(buyer,'site_settings',dict(brand='FORBIDDEN'))[0] == 403
+            settings=dict(brand='Nghệ nhân Văn Nho',phone='0901234567',address='Địa chỉ kiểm thử',hero_image='',portrait_image='',work_image_1='',work_image_2='',work_image_3='')
+            assert post(admin,'site_settings',settings)[0] == 200
+            assert '0901234567' in request(buyer, '/?page=contact')[1]
+            with sqlite3.connect(env['SHOP_DB']) as db:
+                assert db.execute('SELECT value FROM site_settings WHERE key=?', ('brand',)).fetchone()[0] == settings['brand']
+            invalid=dict(settings,hero_image='javascript:alert(1)')
+            status, html, _ = post(admin,'site_settings',invalid)
+            assert 'URL HTTPS hợp lệ' in html
+            print('PASS HTTP: CSRF, registration, roles, cart, checkout, order ownership, admin pages, cancellation, XSS escaping, quote requests, artist pages, settings permissions')
         finally:
             server.terminate()
             server.wait(timeout=5)

@@ -1,19 +1,7 @@
-# Mộc Shop — Website bán hàng PHP
+# Nghệ nhân Văn Nho — Người gửi hồn vào Đá
 
-Website bán hàng nằm trong [`php-shop/`](php-shop/README.md).
+Website đá mỹ nghệ PHP trong [`php-shop/`](php-shop/README.md). Gồm bộ sưu tập, làng nghề, hồ sơ nghệ nhân, tác phẩm đạt giải có nguồn báo chí, dịch vụ, quy trình, liên hệ và phiếu báo giá. Quản trị viên quản lý yêu cầu và cấu hình thương hiệu, hotline, địa chỉ, ảnh.
 
-## Chạy thử
+Chạy `cd php-shop` trước khi cài đặt. Document root: `php-shop/public/`. Database đã cài cần chạy `php bin/migrate-stone.php`. Xem [hướng dẫn chi tiết](php-shop/README.md).
 
-```bash
-cd php-shop
-export ADMIN_EMAIL='admin@example.com'
-read -rsp 'Admin password: ' ADMIN_PASSWORD
-export ADMIN_PASSWORD
-php bin/install.php
-unset ADMIN_PASSWORD
-php -S localhost:8000 -t public
-```
-
-Yêu cầu PHP 8.2+ và PDO SQLite. Mật khẩu quản trị tối thiểu 12 ký tự. Document root trên hosting là `php-shop/public/`.
-
-Xem [hướng dẫn đầy đủ](php-shop/README.md) về chức năng, cấu hình, kiểm thử và giới hạn. Workflow `.github/workflows/php-shop.yml` kiểm tra PHP 8.2/8.3/8.4.
+Ảnh gốc, hotline và địa chỉ chờ chủ cơ sở cung cấp. Chưa tích hợp thanh toán online, email/SMS hoặc upload ảnh trực tiếp.

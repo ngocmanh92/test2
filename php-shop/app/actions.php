@@ -5,6 +5,37 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
         if (!hash_equals(csrf(),(string)($_POST['csrf']??''))) { http_response_code(419); exit('Phiên hết hạn. Hãy tải lại trang.'); }
         $action=(string)($_POST['action']??'');
         switch ($action) {
+            case 'site_settings':
+                requireUser(true);
+                $keys=['brand','phone','address','hero_image','portrait_image','work_image_1','work_image_2','work_image_3'];
+                $values=[];
+                foreach($keys as $key) {
+                    $value=trim((string)($_POST[$key]??''));
+                    if(strlen($value)>1000) throw new DomainException('Thông tin cấu hình quá dài.');
+                    if(str_contains($key,'image') && $value!=='' && (!filter_var($value,FILTER_VALIDATE_URL) || parse_url($value,PHP_URL_SCHEME)!=='https')) throw new DomainException('Ảnh phải là URL HTTPS hợp lệ.');
+                    $values[$key]=$value;
+                }
+                if($values['brand']==='') throw new DomainException('Cần nhập tên thương hiệu.');
+                db()->beginTransaction();
+                try {
+                    foreach($values as $key=>$value) query('INSERT INTO site_settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value',[$key,$value]);
+                    db()->commit();
+                } catch(Throwable $ex) { db()->rollBack(); throw $ex; }
+                redirect('/?page=admin&tab=settings');
+            case 'quote':
+                if (!empty($_POST['website'])) throw new DomainException('Không thể gửi yêu cầu.');
+                if (time()-(int)($_SESSION['last_quote']??0)<60) throw new DomainException('Vui lòng chờ một phút trước khi gửi lại.');
+                $phone=field('phone',20);
+                if (!preg_match('/^[+0-9 ()-]{8,20}$/',$phone)) throw new DomainException('Số điện thoại không hợp lệ.');
+                if (!isset($_POST['consent'])) throw new DomainException('Cần đồng ý sử dụng thông tin để tư vấn.');
+                $pid=integer('product_id');
+                if ($pid && !query('SELECT id FROM products WHERE id=? AND active=1',[$pid])->fetch()) throw new DomainException('Mẫu sản phẩm không tồn tại.');
+                query('INSERT INTO quote_requests(product_id,name,phone,material,dimensions,location,notes) VALUES(?,?,?,?,?,?,?)',[$pid?:null,field('name',100),$phone,field('material',100),field('dimensions',200),field('location',300),field('notes',3000)]);
+                $_SESSION['last_quote']=time(); $_SESSION['quote_sent']=true; redirect('/?page=quote&sent=1');
+            case 'quote_status':
+                requireUser(true); $status=field('status',20);
+                if (!in_array($status,['new','contacted','quoted','closed'],true)) throw new DomainException('Trạng thái không hợp lệ.');
+                query('UPDATE quote_requests SET status=? WHERE id=?',[$status,integer('id',1)]); redirect('/?page=admin&tab=quotes');
             case 'register':
                 $name=field('name',100); $email=strtolower(field('email')); $password=field('password',200);
                 if (!filter_var($email,FILTER_VALIDATE_EMAIL) || strlen($password)<12) throw new DomainException('Email không hợp lệ hoặc mật khẩu dưới 12 ký tự.');

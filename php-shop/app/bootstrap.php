@@ -85,3 +85,14 @@ function orderStatus(int $id,string $next): void {
     } catch(Throwable $ex) { db()->exec('ROLLBACK'); throw $ex; }
 }
 const STATUSES=['pending'=>'Chờ xác nhận','confirmed'=>'Đã xác nhận','shipping'=>'Đang giao','completed'=>'Hoàn tất','cancelled'=>'Đã hủy'];
+
+function setting(string $key,string $fallback=''): string {
+    static $values;
+    if($values===null) {
+        $values=[];
+        if(query("SELECT name FROM sqlite_master WHERE type='table' AND name='site_settings'")->fetch()) {
+            foreach(query('SELECT key,value FROM site_settings')->fetchAll() as $row) $values[$row['key']]=$row['value'];
+        }
+    }
+    return $values[$key]??$fallback;
+}

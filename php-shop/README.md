@@ -1,29 +1,23 @@
-# Mộc Shop — website bán hàng PHP
+# Website đá mỹ nghệ — danh mục mẫu & yêu cầu báo giá
 
-Website tiếng Việt dùng PHP 8.2+ và SQLite (PDO), không cần Composer hoặc Node.js. Giao diện responsive cho máy tính và điện thoại.
+Giao diện tiếng Việt tham khảo cách tổ chức nội dung của các website đá mỹ nghệ Non Nước. Tên mặc định “ĐÁ MỸ NGHỆ” là tên tạm, không đại diện cho cơ sở trong nguồn tham khảo.
 
-## Chức năng đã triển khai
+## Phần mới
 
-- Trang chủ, danh mục, tìm kiếm, sắp xếp giá, phân trang, chi tiết sản phẩm và ảnh qua URL HTTPS.
-- Đăng ký, đăng nhập, đăng xuất, sửa tên, đổi mật khẩu; phân quyền khách hàng/quản trị.
-- Giỏ hàng trong session, cập nhật số lượng và xóa sản phẩm.
-- Checkout yêu cầu đăng nhập, địa chỉ nhận hàng, COD hoặc chuyển khoản thủ công.
-- Mã giảm theo phần trăm, giá trị đơn tối thiểu, ngày hết hạn, bật/tắt mã.
-- Phí vận chuyển cố định 30.000đ, miễn phí từ 500.000đ; sửa quy tắc tại `app/bootstrap.php::totals`.
-- Lịch sử và chi tiết đơn chỉ dành cho chủ đơn hoặc quản trị viên; giá và tên được lưu tại thời điểm đặt.
-- Quản trị: thống kê, thêm/sửa/ẩn sản phẩm, tồn kho, thêm danh mục, xem khách hàng, lọc đơn hàng, trạng thái giao hàng, xác nhận thanh toán.
-- Trạng thái: chờ xác nhận → đã xác nhận → đang giao → hoàn tất. Có thể hủy trước khi giao; hoàn kho một lần.
-- Kiểm tra giá và tồn kho phía server; giao dịch SQLite `BEGIN IMMEDIATE` tránh bán vượt tồn kho.
-- PDO prepared statements, HTML escaping, CSRF cho mọi POST, HttpOnly/SameSite cookie, session regeneration, khóa đăng nhập theo email sau 5 lần sai trong 15 phút.
-- GitHub Actions: kiểm tra cú pháp, integration và HTTP trên PHP 8.2/8.3/8.4.
+- Trang chủ: giới thiệu, nhóm mẫu, tìm kiếm, lọc danh mục, phân trang, câu chuyện làng nghề và lời mời tư vấn.
+- Trang chi tiết mẫu, trang giới thiệu làng nghề, quy trình đề xuất và liên hệ.
+- Sáu nhóm mẫu: Tượng Phật, Tượng Công giáo, Linh vật đá, Đồ thờ đá, Đá sân vườn, Tượng nghệ thuật.
+- Giá công khai chuyển thành “Liên hệ báo giá”; không công bố giá hoặc phí vận chuyển mẫu như giá thương mại thực tế.
+- Phiếu tư vấn không yêu cầu đăng nhập: mẫu, họ tên, điện thoại, chất liệu, kích thước, địa điểm và nội dung. Có CSRF, đồng ý liên hệ, honeypot và khoảng cách gửi tối thiểu 60 giây mỗi session.
+- Admin: mục “Yêu cầu báo giá”, trạng thái Mới / Đã liên hệ / Đã báo giá / Đã đóng.
+- Chưa gửi email/SMS tự động. Yêu cầu chỉ được lưu trong database và hiển thị trong admin. Chưa có upload ảnh tham khảo hoặc gửi tệp đính kèm.
 
-## Cài đặt
+## Cài mới
 
-Yêu cầu `php`, `pdo_sqlite`, thư mục `storage` cho phép PHP ghi. Chạy từ thư mục gốc dự án:
+Yêu cầu PHP 8.2+, PDO SQLite. Chạy trong `php-shop/`:
 
 ```bash
 export ADMIN_EMAIL='admin@example.com'
-# Nhập mật khẩu riêng; không commit lên GitHub.
 read -rsp 'Admin password: ' ADMIN_PASSWORD
 export ADMIN_PASSWORD
 php bin/install.php
@@ -31,16 +25,29 @@ unset ADMIN_PASSWORD
 php -S localhost:8000 -t public
 ```
 
-Mật khẩu quản trị tối thiểu 12 ký tự. Truy cập http://localhost:8000 và đăng nhập bằng tài khoản vừa tạo. Bộ cài không ghi đè database đã tồn tại. Có 6 sản phẩm mẫu và mã `WELCOME10`, giảm 10% cho đơn từ 200.000đ, hết hạn sau một năm tính từ ngày cài.
+Mật khẩu tối thiểu 12 ký tự. Bộ cài không ghi đè database đã tồn tại. Sản phẩm mẫu có giá và tồn kho bằng 0, dùng để bắt đầu trao đổi, không phải hàng có sẵn.
 
-Biến môi trường tùy chọn:
+## Nâng cấp database đã cài
 
-| Biến | Ý nghĩa |
+Sao lưu database trước, rồi chạy `php bin/migrate-stone.php`. Script chỉ tạo bảng yêu cầu báo giá nếu chưa có; không xóa, đổi tên hoặc sửa giá sản phẩm/đơn hàng cũ. Nếu đang dùng dữ liệu Mộc Shop cũ, cần sửa danh mục và sản phẩm trong database trước khi công bố; migration không tự thay dữ liệu kinh doanh.
+
+## Thông tin cần cấu hình
+
+| Biến môi trường | Nội dung |
 | --- | --- |
-| `SHOP_DB` | Đường dẫn tuyệt đối tới database; mặc định `storage/shop.sqlite` |
-| `BANK_INSTRUCTIONS` | Ngân hàng, số tài khoản, chủ tài khoản hiển thị trên đơn chuyển khoản |
+| SHOP_NAME | Tên cơ sở thật |
+| SHOP_PHONE | Hotline thật |
+| SHOP_ADDRESS | Địa chỉ thật |
+| SHOP_DB | Đường dẫn SQLite; mặc định storage/shop.sqlite |
+| BANK_INSTRUCTIONS | Thông tin chuyển khoản cho luồng đơn hàng cũ |
 
-Không tự đọc `.env`: cấu hình biến môi trường trên web server hoặc hosting. Không nhập thông tin ngân hàng giả. Chuyển khoản chưa được tự động đối soát, quản trị xác nhận sau khi kiểm tra tiền nhận thực tế.
+Ứng dụng không tự đọc `.env`. Đặt biến trong môi trường server/hosting. Document root phải là `php-shop/public/`, bật HTTPS và không công khai database/storage/app. PHP development server chỉ dùng phát triển.
+
+## Hình ảnh và nội dung
+
+Hiện dùng placeholder ảnh có nhãn rõ ràng; khối đá trang đầu là hình trừu tượng CSS. Thêm ảnh được phép sử dụng bằng trường URL HTTPS trong admin. Chưa có gallery nhiều ảnh hoặc trường thông số có cấu trúc; có thể ghi thông số đã xác nhận trong mô tả sản phẩm. Không sao chép ảnh, nội dung nguyên văn, hotline, địa chỉ, tuổi nghề, số công trình hoặc bảo hành của nguồn tham khảo sang thương hiệu người dùng.
+
+Quy trình trên website là đề xuất tư vấn, chưa phải cam kết dịch vụ. Chủ cơ sở cần xác nhận thông tin vật liệu, quy trình, chính sách, ảnh thật, giá và quyền sử dụng nội dung trước khi mở bán. Chưa tạo hồ sơ công trình giả; trang dự án sẽ cần ảnh và mô tả được cung cấp.
 
 ## Kiểm thử
 
@@ -50,38 +57,34 @@ php tests/run.php
 python3 tests/smoke.py
 ```
 
-Tests dùng database tạm riêng và không đụng dữ liệu cửa hàng. HTTP tests kiểm tra CSRF, đăng ký, phân quyền, giỏ hàng, checkout, quyền sở hữu đơn, các trang admin, hủy đơn và escape XSS. Integration tests kiểm tra tính tiền, rollback thiếu hàng, chống giả giá, hoàn kho và luồng trạng thái.
+HTTP test bao gồm gửi phiếu tư vấn và kiểm tra admin nhận được yêu cầu. Các bài kiểm tra checkout cũ dùng fixture riêng để tiếp tục kiểm tra hồi quy.
 
-## Đưa lên hosting / Hostinger
+## Luồng cửa hàng cũ
 
-1. Bật PHP 8.2+ và extension PDO SQLite. Kiểm tra hosting có hỗ trợ SQLite; dự án chưa có driver MySQL.
-2. Document root phải là thư mục `public/`; không để `storage`, `app`, database hay toàn bộ repo trong thư mục công khai.
-3. Tạo database bằng CLI, cấu hình biến môi trường, quyền ghi storage và bật HTTPS. Không dùng PHP development server trên production.
-4. Cấu hình `BANK_INSTRUCTIONS`, sửa thương hiệu, chính sách vận chuyển/đổi trả và thông tin liên hệ trong giao diện trước khi mở bán.
-5. Sao lưu SQLite bằng SQLite backup API hoặc dừng ghi trong khi sao chép. Lưu bản sao ngoài web root, kiểm thử khôi phục. Tắt display_errors; giữ log nội bộ.
+Các route giỏ hàng, tài khoản, checkout COD/chuyển khoản và đơn hàng cũ vẫn được giữ cho dữ liệu cũ; không đặt làm lời kêu gọi chính trên giao diện mới. Quy tắc giao hàng cố định trong luồng này chỉ là cấu hình demo, không áp dụng cho yêu cầu báo giá. Chưa tích hợp cổng thanh toán, giao vận, email/SMS, bản vẽ, hợp đồng hoặc thanh toán đặt cọc.
 
-## Cấu trúc
+## Nguồn tham khảo
 
-```text
-app/bootstrap.php    Database, session, CSRF, giá, checkout, trạng thái
-app/actions.php      Xử lý POST và phân quyền
-app/admin.php        Giao diện quản trị
-app/order-table.php  Bảng đơn hàng dùng chung
-public/index.php     Router và giao diện khách hàng
-public/assets/       CSS responsive
-bin/install.php      Cài schema, admin, dữ liệu mẫu qua CLI
-storage/             SQLite (không commit)
-database.sql         Schema và indexes
-tests/              Integration và HTTP tests
-.github/workflows/   CI
-```
+- https://danguyencong.com/lang-nghe-da-my-nghe-non-nuoc/
+- https://www.phanthien.com/tin-tuc/thuyet-minh-ve-lang-da-non-nuoc-ngu-hanh-son-da-nang-n38.html
+- https://dieukhacdaanhnhat.com/danh-muc/tuong-cong-giao/
+- https://damynghenonnuocdn.com/
+- https://danonnuoc.vn/
+- https://tuongphatdamynghe.com/
 
-## Giới hạn và phần cần tích hợp tiếp
+Đọc ngày 24/10/2026. Tham khảo phân nhóm sản phẩm, nội dung làng nghề và luồng tư vấn; nội dung website được viết mới.
 
-Đây là phiên bản nền tảng hoạt động cho cửa hàng nhỏ, chưa phải toàn bộ hệ thống thương mại điện tử production. Chưa có VNPay/MoMo/Stripe, webhook thanh toán, API giao vận, email/SMS, quên mật khẩu qua email, đánh giá, yêu thích, biến thể SKU, nhiều địa chỉ, xuất hóa đơn, hoàn tiền, thuế, nhiều kho, audit log, chống bot hoặc cấu hình cửa hàng qua admin. Danh mục hiện hỗ trợ thêm; đơn hàng/khách hàng trong admin hiển thị tối đa 200 dòng. Không lưu dữ liệu thẻ. Các tích hợp cần tài khoản nhà cung cấp và kiểm thử riêng.
+## Yêu cầu thương hiệu Văn Nho (ảnh tài liệu người dùng)
 
-Giỏ hàng session được xóa sau khi đặt thành công. API chưa có idempotency key riêng, cần bổ sung trước khi dùng với frontend tự retry hoặc tải lớn. Khi số đơn tăng, chuyển database sang MySQL/PostgreSQL và bổ sung phân trang quản trị.
+Đã bổ sung: đầu trang “Nghệ nhân Văn Nho – Người gửi hồn vào Đá”; hồ sơ nghệ nhân; tác phẩm đạt giải và liên kết ba bài báo; các dòng Công giáo, Phật giáo, nội thất/cảnh quan; nội dung giá, chất lượng, tư vấn đặt riêng, bản vẽ và nhu cầu kết cấu.
 
-## Repository
+Cấu hình admin → Cấu hình website cho tên, hotline, địa chỉ, ảnh đầu trang, chân dung và ba ảnh tác phẩm/quá trình chế tác. Giá trị trong admin ưu tiên hơn biến môi trường. Khi nâng cấp database đã cài, chạy lại `php bin/migrate-stone.php` để thêm `site_settings`.
 
-Dự án nằm tại `php-shop/` trong `ngocmanh92/test2`. Chạy `cd php-shop` trước khi cài đặt; document root của cửa hàng là `php-shop/public/`. Workflow ở `.github/workflows/php-shop.yml` tại gốc repository.
+Ảnh chụp tài liệu IMG_0118.png có hình thu nhỏ, không được dùng như ảnh sản phẩm gốc. Các vị trí ảnh có nhãn chờ cập nhật cho đến khi cung cấp URL ảnh thật. Địa chỉ và hotline chưa được cung cấp. Mục 7 chỉ đọc được phần thiết kế bản vẽ, tính toán kết cấu; phần bên dưới bị cắt nên chưa suy diễn yêu cầu khác.
+
+Thông tin “3 lần đoạt giải nhất” trong tài liệu chưa được xác minh: nguồn xác nhận giải Nhì “Đá nở hoa” năm 2023 và giải Nhất “Huyền thoại Ngũ Hành Sơn” năm 2026. Website ghi từng thành tích đã đối chiếu, không dùng “đứng đầu làng nghề”. Cam kết độ bền/màu sắc được diễn đạt theo loại đá, môi trường và bảo dưỡng, không bảo đảm tuyệt đối “không xuống màu”. Nhu cầu đội ngũ thiết kế/kết cấu được thể hiện qua luồng tư vấn, chưa công bố tên chuyên viên hay chứng chỉ khi chưa có hồ sơ.
+
+Nguồn hồ sơ nghệ nhân:
+- https://vnexpress.net/nguoi-nan-phoi-cho-hang-tram-tuong-da-non-nuoc-5130767.html
+- https://nhandan.vn/o-lai-de-tra-on-lang-da-post881505.html
+- https://thanhnien.vn/huyen-thoai-ngu-hanh-son-duoc-khac-vao-da-doat-giai-nhat-cuoc-thi-dieu-khac-185260827114406794.htm
