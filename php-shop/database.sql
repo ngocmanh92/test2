@@ -12,3 +12,5 @@ CREATE INDEX orders_user ON orders(user_id,created_at);
 CREATE TABLE IF NOT EXISTS quote_requests(id INTEGER PRIMARY KEY,product_id INTEGER REFERENCES products(id),name TEXT NOT NULL,phone TEXT NOT NULL,material TEXT NOT NULL,dimensions TEXT NOT NULL,location TEXT NOT NULL,notes TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'new' CHECK(status IN('new','contacted','quoted','closed')),created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
 
 CREATE TABLE IF NOT EXISTS site_settings(key TEXT PRIMARY KEY,value TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS quote_requests_status_id ON quote_requests(status,id DESC);
+CREATE INDEX IF NOT EXISTS products_active_id ON products(active,id);

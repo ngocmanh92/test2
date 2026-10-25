@@ -26,5 +26,6 @@ try {
     check(query('SELECT status FROM orders WHERE id=?',[$id])->fetchColumn()==='completed','order lifecycle');
     try { totals([$p],'INVALID'); throw new RuntimeException('should reject'); } catch(DomainException $e) {}
     check(e('<script>')==='&lt;script&gt;','HTML escaping');
+    check(substr_count(pageLinks(500,10000),'<a ')<=7,'bounded pagination for large catalogs');
     echo "All integration checks passed.\n";
 } finally { @unlink($file); }

@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
                 if (!in_array($status,['new','contacted','quoted','closed'],true)) throw new DomainException('Trạng thái không hợp lệ.');
                 query('UPDATE quote_requests SET status=? WHERE id=?',[$status,integer('id',1)]); redirect('/?page=admin&tab=quotes');
             case 'register':
-                $name=field('name',100); $email=strtolower(field('email')); $password=field('password',200);
+                $name=field('name',100); $email=strtolower(field('email')); $password=field('password',72);
                 if (!filter_var($email,FILTER_VALIDATE_EMAIL) || strlen($password)<12) throw new DomainException('Email không hợp lệ hoặc mật khẩu dưới 12 ký tự.');
                 if (query('SELECT id FROM users WHERE email=?',[$email])->fetch()) throw new DomainException('Email đã được đăng ký.');
                 query('INSERT INTO users(name,email,password) VALUES(?,?,?)',[$name,$email,password_hash($password,PASSWORD_DEFAULT)]);
@@ -66,12 +66,15 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
                 $id=checkout((int)$u['id'],cart(),field('name',100),$phone,field('address',1000),field('payment',10),strtoupper(trim((string)($_POST['coupon']??''))));
                 $_SESSION['cart']=[]; redirect('/?page=order&id='.$id);
             case 'profile':
-                $u=requireUser(); query('UPDATE users SET name=? WHERE id=?',[field('name',100),$u['id']]);
+                $u=requireUser(); $name=field('name',100); $newHash=null;
                 if (!empty($_POST['password'])) {
                     $old=query('SELECT password FROM users WHERE id=?',[$u['id']])->fetchColumn();
-                    if (!password_verify((string)($_POST['current_password']??''),$old) || strlen((string)$_POST['password'])<12) throw new DomainException('Mật khẩu hiện tại không đúng hoặc mật khẩu mới dưới 12 ký tự.');
-                    query('UPDATE users SET password=? WHERE id=?',[password_hash((string)$_POST['password'],PASSWORD_DEFAULT),$u['id']]); session_regenerate_id(true);
-                } redirect('/?page=account');
+                    if (!password_verify((string)($_POST['current_password']??''),$old) || (strlen((string)$_POST['password'])<12 || strlen((string)$_POST['password'])>72)) throw new DomainException('Mật khẩu hiện tại không đúng hoặc mật khẩu mới dưới 12 ký tự.');
+                    $newHash=password_hash((string)$_POST['password'],PASSWORD_DEFAULT);
+                }
+                if($newHash!==null) { query('UPDATE users SET name=?,password=? WHERE id=?',[$name,$newHash,$u['id']]); session_regenerate_id(true); }
+                else query('UPDATE users SET name=? WHERE id=?',[$name,$u['id']]);
+                redirect('/?page=account');
             case 'category': requireUser(true); query('INSERT INTO categories(name) VALUES(?)',[field('name',100)]); redirect('/?page=admin&tab=categories');
             case 'product':
                 requireUser(true); $id=integer('id'); $image=trim((string)($_POST['image']??''));

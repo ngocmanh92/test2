@@ -88,3 +88,19 @@ Nguồn hồ sơ nghệ nhân:
 - https://vnexpress.net/nguoi-nan-phoi-cho-hang-tram-tuong-da-non-nuoc-5130767.html
 - https://nhandan.vn/o-lai-de-tra-on-lang-da-post881505.html
 - https://thanhnien.vn/huyen-thoai-ngu-hanh-son-duoc-khac-vao-da-doat-giai-nhat-cuoc-thi-dieu-khac-185260827114406794.htm
+
+## Nâng cấp tối ưu ngày 25/10/2026
+
+- Báo giá: tìm theo tên/điện thoại, lọc trạng thái, 25 mục mỗi trang, xem được toàn bộ dữ liệu thay vì giới hạn 200 bản ghi. Các ký tự `%`/`_` được tìm theo nghĩa đen trong bộ lọc admin.
+- Phân trang danh mục giới hạn số liên kết (tối đa 7) và giữ nguyên bộ lọc; số trang vượt phạm vi được đưa về trang cuối.
+- Trang sản phẩm, nghệ nhân và dịch vụ có tiêu đề SEO riêng, mô tả và Open Graph; trang tìm kiếm/phiếu báo giá không lập chỉ mục. Khu quản trị/tài khoản dùng noindex. Chưa có canonical/sitemap vì tên miền triển khai chưa được cấu hình.
+- Menu điện thoại dùng HTML details, không phụ thuộc JavaScript; thêm liên kết bỏ qua điều hướng, focus bàn phím, hỗ trợ giảm chuyển động và nút tư vấn cố định.
+- Ảnh danh mục khai báo kích thước, lazy loading và giải mã bất đồng bộ; ảnh đầu trang được ưu tiên tải. Kích thước hiển thị thực tế còn phụ thuộc ảnh gốc được cung cấp.
+- CSS có phiên bản theo thời gian sửa file. `public/.htaccess` bật nén/caching file tĩnh khi Apache/LiteSpeed hỗ trợ; tắt liệt kê thư mục. PHP luôn trả `Cache-Control: private, no-store` để tránh cache phiên, phiếu và dữ liệu cá nhân. Cấu hình này không được kiểm tra bằng PHP development server; cần xác minh header trên hosting sau triển khai.
+- Giỏ hàng đọc sản phẩm bằng một truy vấn thay vì mỗi sản phẩm một truy vấn. Thêm index cho danh mục đang hiển thị và trạng thái báo giá.
+- Từ chối GET/POST dạng mảng và giá trị quá dài với HTTP 400, session strict mode; lỗi ngoài dự kiến trả thông báo chung, chi tiết ghi log phía server.
+- Đổi hồ sơ chỉ ghi tên/mật khẩu sau khi kiểm tra đầy đủ, tránh lưu một phần khi mật khẩu hiện tại sai. Đăng ký/đổi mật khẩu giới hạn 12–72 byte theo cơ chế băm hiện tại.
+
+**Nâng cấp database cũ:** sao lưu và chạy lại `php bin/migrate-stone.php` để tạo index còn thiếu; không xóa dữ liệu. Không có thay đổi nào được tự động triển khai lên Hostinger.
+
+Kiểm thử bổ sung: đầu vào sai định dạng, private cache header, metadata, đổi hồ sơ bị từ chối không sửa tên, quyền cấu hình, phân trang/tìm kiếm/lọc báo giá và số liên kết danh mục lớn. Chưa có điểm Lighthouse hoặc đo tải production, nên không đưa ra phần trăm tăng tốc.

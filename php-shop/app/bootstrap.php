@@ -2,8 +2,27 @@
 declare(strict_types=1);
 const ROOT = __DIR__ . '/..';
 if (PHP_SAPI !== 'cli') {
+    ini_set('display_errors','0');
+    set_exception_handler(function(Throwable $ex): void {
+        error_log((string)$ex);
+        while(ob_get_level()>0) ob_end_clean();
+        http_response_code(500);
+        header('Content-Type: text/html; charset=UTF-8');
+        header('Cache-Control: no-store');
+        echo '<!doctype html><html lang="vi"><meta charset="utf-8"><title>Tạm thời chưa khả dụng</title><h1>Chưa thể xử lý yêu cầu</h1><p>Vui lòng thử lại sau hoặc liên hệ cơ sở.</p></html>';
+    });
+    foreach ([$_GET,$_POST] as $input) foreach ($input as $value) {
+        if (!is_string($value) || strlen($value)>12000) {
+            http_response_code(400); exit('Dữ liệu gửi lên không hợp lệ.');
+        }
+    }
+    ini_set('session.use_strict_mode','1');
+}
+if (PHP_SAPI !== 'cli') {
     session_set_cookie_params(['httponly'=>true,'secure'=>!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off','samesite'=>'Lax']);
     session_start();
+    header('Content-Type: text/html; charset=UTF-8');
+    header('Cache-Control: private, no-store');
     header("Content-Security-Policy: default-src 'self'; img-src 'self' https:; style-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'");
     header('X-Content-Type-Options: nosniff');
     header('Referrer-Policy: strict-origin-when-cross-origin');
@@ -36,10 +55,13 @@ function integer(string $name,int $min=0,int $max=1000000000): int {
     $v=filter_var($_POST[$name]??null,FILTER_VALIDATE_INT); if ($v===false || $v===null || $v<$min || $v>$max) throw new DomainException('Giá trị '.$name.' không hợp lệ.'); return $v;
 }
 function cart(): array {
-    $rows=[]; foreach ($_SESSION['cart']??[] as $id=>$qty) {
-        $p=query('SELECT * FROM products WHERE id=? AND active=1',[(int)$id])->fetch();
-        if ($p) { $p['qty']=(int)$qty; $rows[]=$p; }
-    } return $rows;
+    $quantities=$_SESSION['cart']??[];
+    if(!$quantities) return [];
+    $ids=array_map('intval',array_keys($quantities));
+    $rows=query('SELECT * FROM products WHERE active=1 AND id IN ('.implode(',',array_fill(0,count($ids),'?')).')',$ids)->fetchAll();
+    foreach($rows as &$row) $row['qty']=(int)$quantities[$row['id']];
+    unset($row);
+    return $rows;
 }
 function totals(array $rows,string $code=''): array {
     $subtotal=0; foreach ($rows as $p) $subtotal+=(int)$p['price']*(int)$p['qty'];
@@ -95,4 +117,22 @@ function setting(string $key,string $fallback=''): string {
         }
     }
     return $values[$key]??$fallback;
+}
+
+function asset(string $path): string {
+    $file=ROOT.'/public/'.$path;
+    return '/'.$path.'?v='.(is_file($file)?filemtime($file):'1');
+}
+function pageLinks(int $current,int $pages,array $params=[],string $anchor=''): string {
+    if($pages<=1) return '';
+    $current=max(1,min($pages,$current));
+    $numbers=array_unique(array_merge([1,$pages],range(max(1,$current-2),min($pages,$current+2))));
+    sort($numbers); $html='<nav class="pagination" aria-label="Phân trang">'; $last=0;
+    foreach($numbers as $i) {
+        if($last && $i>$last+1) $html.='<span aria-hidden="true">…</span>';
+        $url='/?'.http_build_query(array_merge($params,['n'=>$i])).$anchor;
+        $html.='<a href="'.e($url).'"'.($i===$current?' aria-current="page"':'').'>'.$i.'</a>';
+        $last=$i;
+    }
+    return $html.'</nav>';
 }

@@ -31,7 +31,7 @@ with tempfile.TemporaryDirectory() as tmp:
             buyer, other, admin = client(), client(), client()
             def request(c, path='/', data=None):
                 try:
-                    with c.open(base+path, None if data is None else urllib.parse.urlencode(data).encode()) as r:
+                    with c.open(base+path, None if data is None else urllib.parse.urlencode(data).encode(), timeout=10) as r:
                         return r.status, r.read().decode(), r.url
                 except urllib.error.HTTPError as ex:
                     return ex.code, ex.read().decode(), ex.url
@@ -81,7 +81,27 @@ with tempfile.TemporaryDirectory() as tmp:
             invalid=dict(settings,hero_image='javascript:alert(1)')
             status, html, _ = post(admin,'site_settings',invalid)
             assert 'URL HTTPS hợp lệ' in html
-            print('PASS HTTP: CSRF, registration, roles, cart, checkout, order ownership, admin pages, cancellation, XSS escaping, quote requests, artist pages, settings permissions')
+            assert request(buyer, '/?q%5B%5D=bad')[0] == 400
+            assert request(buyer, '/', {'csrf[]':'bad','action':'quote'})[0] == 400
+            home=request(buyer)[1]
+            assert '/assets/stone.css?v=' in home and 'mobile-menu' in home and 'skip-link' in home
+            assert '<title>Tượng Quan Âm' in request(buyer, '/?page=product&id=1')[1]
+            assert 'noindex,follow' in request(buyer, '/?q=Quan')[1]
+            with buyer.open(base+'/', timeout=10) as response:
+                assert 'no-store' in response.headers.get('Cache-Control','')
+            status, html, _=post(buyer,'profile',dict(name='MUST NOT SAVE',current_password='wrong',password='new-password-12345'), '/?page=account')
+            with sqlite3.connect(env['SHOP_DB']) as db:
+                assert db.execute('SELECT name FROM users WHERE email=?', ('buyer@example.test',)).fetchone()[0] == 'buyer'
+                for i in range(27):
+                    db.execute('INSERT INTO quote_requests(name,phone,material,dimensions,location,notes,status) VALUES(?,?,?,?,?,?,?)', ('Pagination '+str(i),'0900000000','Đá trắng','100 cm','Đà Nẵng','Test', 'quoted' if i<2 else 'new'))
+            html=request(admin, '/?page=admin&tab=quotes')[1]
+            assert html.count('<article class="coupon">') == 25 and 'Trang 1/2' in html
+            html=request(admin, '/?page=admin&tab=quotes&n=2')[1]
+            assert html.count('<article class="coupon">') == 3 and 'Trang 2/2' in html
+            html=request(admin, '/?page=admin&tab=quotes&status=quoted&q=Pagination')[1]
+            assert html.count('<article class="coupon">') == 2
+            assert 'Không có yêu cầu phù hợp' in request(admin, '/?page=admin&tab=quotes&q=%25')[1]
+            print('PASS HTTP: CSRF, registration, roles, cart, checkout, order ownership, admin pages, cancellation, XSS escaping, quote requests, artist pages, settings permissions, malformed inputs, atomic profile, metadata, quote pagination/filter')
         finally:
             server.terminate()
             server.wait(timeout=5)
