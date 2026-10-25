@@ -71,7 +71,7 @@ with tempfile.TemporaryDirectory() as tmp:
             for route in ['artist','services','about','process','contact']:
                 status, html, _ = request(buyer, '/?page='+route)
                 assert status == 200 and 'Fatal error' not in html
-            assert 'Người gửi hồn vào Đá' in re.sub(r'<[^>]+>', ' ', request(buyer)[1]).replace('vào  Đá', 'vào Đá')
+            assert 'Tinh hoa từ đá.' in request(buyer)[1] and 'category-showcase' in request(buyer)[1]
             assert post(buyer,'site_settings',dict(brand='FORBIDDEN'))[0] == 403
             settings=dict(brand='Nghệ nhân Văn Nho',phone='0901234567',address='Địa chỉ kiểm thử',hero_image='',portrait_image='',work_image_1='',work_image_2='',work_image_3='')
             assert post(admin,'site_settings',settings)[0] == 200
@@ -87,6 +87,20 @@ with tempfile.TemporaryDirectory() as tmp:
             assert '/assets/stone.css?v=' in home and 'mobile-menu' in home and 'skip-link' in home
             assert '<title>Tượng Quan Âm' in request(buyer, '/?page=product&id=1')[1]
             assert 'noindex,follow' in request(buyer, '/?q=Quan')[1]
+            assert 'craft-feature' in home and 'buying-guide' in home and 'Tinh hoa từ đá.' in home
+            for name in ['village.jpg','buddhist.png','catholic.png','lion.png','incense.jpg','fountain.jpg','art.jpg','workshop.jpg']:
+                with buyer.open(base+'/assets/references/'+name, timeout=10) as response:
+                    assert response.status == 200 and response.headers.get_content_type().startswith('image/')
+            original_product=request(buyer,'/?page=product&id=1')[1]
+            assert 'references/buddhist.png' in original_product and 'Ảnh tham khảo' in original_product
+            with sqlite3.connect(env['SHOP_DB']) as db:
+                db.execute('UPDATE products SET image=? WHERE id=1', ('https://example.test/own-photo.jpg',))
+            custom_product=request(buyer,'/?page=product&id=1')[1]
+            assert 'https://example.test/own-photo.jpg' in custom_product and 'references/buddhist.png' not in custom_product
+
+            with sqlite3.connect(env['SHOP_DB']) as db:
+                db.execute("INSERT INTO site_settings(key,value) VALUES('reference_mode','0') ON CONFLICT(key) DO UPDATE SET value='0'")
+            assert '/assets/references/' not in request(buyer)[1]
             with buyer.open(base+'/', timeout=10) as response:
                 assert 'no-store' in response.headers.get('Cache-Control','')
             status, html, _=post(buyer,'profile',dict(name='MUST NOT SAVE',current_password='wrong',password='new-password-12345'), '/?page=account')

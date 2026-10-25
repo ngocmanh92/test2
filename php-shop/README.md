@@ -120,3 +120,15 @@ Hồ sơ nghệ nhân tham khảo ba bài báo người dùng cung cấp:
 Đã đọc ngày 24/10/2026. Chỉ ghi thành tích đã đối chiếu: Đá nở hoa — giải Nhì 2023, Huyền thoại Ngũ Hành Sơn — giải Nhất 2026; không dùng tuyên bố chưa xác minh “3 lần giải nhất”. Không sao chép ảnh/địa chỉ/hotline của nguồn khác. Ảnh tài liệu người dùng chưa thay ảnh gốc. Phần cuối mục 7 bị cắt trong tài liệu chưa được suy diễn thêm.
 
 Còn cần dữ liệu thật, điều kiện dịch vụ và kiểm thử triển khai. Chưa có thanh toán online, giao vận, hợp đồng điện tử, đối soát đặt cọc, nhiều kho hoặc ứng dụng kế toán. Các phần này không được mô tả là đã hoàn thành.
+
+## Đồng bộ giao diện danonnuoc.net (25/10/2026)
+
+Đồng bộ CSS và bố cục theo trang công khai của người dùng: thương hiệu mặc định Đá Non Nước, tông kem/xanh trầm, hero ảnh dạng vòm, 6 dòng sản phẩm có ảnh, tác phẩm mẫu, phần chế tác và FAQ. Các route và phân quyền quản trị mở rộng vẫn giữ nguyên. Không sửa database, thông tin liên hệ hoặc nội dung đã cấu hình khi cập nhật mã.
+
+Các mục cấu hình mới: dòng đầu trang, khẩu hiệu, tiêu đề/thông điệp hero, ảnh chế tác. `reference_mode=1` (mặc định) hiển thị ảnh tham khảo; nhập `0` để tắt. Tiêu đề trống dùng nội dung mặc định. Ảnh sản phẩm, ảnh đầu trang và ảnh chế tác do chủ cơ sở cấu hình luôn được ưu tiên hơn ảnh mẫu.
+
+Tám ảnh trong `public/assets/references/` được lấy từ các tài nguyên đang hiển thị trên danonnuoc.net do người dùng cung cấp để đồng bộ giao diện. Chú thích/nguồn Nguyễn Công, Anh Nhật, Thành Đô được giữ cạnh ảnh. Chúng là ảnh tham khảo, không được mô tả thành sản phẩm hoặc công trình riêng của cơ sở. Danh sách nguồn nằm trong `app/theme.php`. Khi dùng thương mại, chủ cơ sở cần bảo đảm quyền sử dụng hoặc thay ảnh riêng qua quản trị; ghi nguồn không tự thay thế quyền sử dụng ảnh.
+
+Ảnh mẫu sản phẩm chỉ áp dụng cho sáu tên mẫu mặc định và chỉ khi trường ảnh sản phẩm trống; không gán nhầm cho sản phẩm mới. Danh mục hiển thị theo dữ liệu hiện tại, ưu tiên ảnh riêng có sẵn trong sản phẩm thuộc danh mục. CSS tham chiếu được giữ kèm lớp truy cập bàn phím/menu mobile/gallery của bản nâng cấp.
+
+Cập nhật GitHub không tự triển khai hoặc thay database trên website danonnuoc.net. Kiểm tra giao diện trên hosting sau khi đưa mã lên; môi trường kiểm thử hiện kiểm tra HTML, tài nguyên ảnh và chức năng, chưa có kiểm thử so sánh ảnh chụp tự động.

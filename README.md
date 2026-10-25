@@ -1,7 +1,9 @@
-# Nghệ nhân Văn Nho — Người gửi hồn vào Đá
+# Đá Non Nước — website PHP và quản trị
 
-Website đá mỹ nghệ PHP trong [`php-shop/`](php-shop/README.md): danh mục và bộ ảnh sản phẩm, CMS bài viết/công trình/thành tích, phiếu và báo giá chi tiết, cấu hình nội dung/SEO, nhân viên và phân quyền, nhật ký, 2FA, hàng đợi email, sao lưu/khôi phục database cùng ảnh.
+Giao diện được đồng bộ theo website của người dùng **danonnuoc.net**: tông kem/xanh trầm, ảnh hero dạng vòm, nhóm sản phẩm có ảnh, phần chế tác và FAQ. Hồ sơ nghệ nhân Văn Nho và bộ quản trị mở rộng được giữ lại.
 
-Cài mới hoặc nâng cấp: xem [README](php-shop/README.md). Chạy trong `php-shop/`; database đã cài cần sao lưu và chạy `php bin/migrate-stone.php`. Document root: `php-shop/public/`.
+Mã website: [`php-shop/`](php-shop/README.md). Quản trị hỗ trợ ảnh/gallery, CMS, danh mục con, báo giá, nhân viên/phân quyền, 2FA, nhật ký, email queue và backup/restore.
 
-Email/quên mật khẩu cần MAIL_FROM, SHOP_URL, mail transport và cron thật. Bản in báo giá hỗ trợ Lưu thành PDF qua trình duyệt. ZIP backup cần extension zip. Hotline, địa chỉ và ảnh gốc chờ cung cấp. Chưa triển khai Hostinger hoặc tích hợp thanh toán online.
+Cài đặt/nâng cấp: xem [README](php-shop/README.md). Document root `php-shop/public/`; database cũ cần migration nếu chưa cập nhật bộ quản trị. Cập nhật giao diện không ghi đè dữ liệu hoặc tự triển khai lên hosting.
+
+Ảnh tham khảo được ghi nguồn, có thể tắt hoặc thay ảnh riêng trong admin. Email cần cấu hình mail/cron thật. Bản in hỗ trợ Lưu PDF qua trình duyệt; ZIP backup cần extension zip.

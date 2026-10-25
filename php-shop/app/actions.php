@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
         switch ($action) {
             case 'site_settings':
                 requireUser(true);
-                $keys=['brand','phone','address','hero_image','portrait_image','work_image_1','work_image_2','work_image_3','hero_intro','seo_description','policy','notification_email'];
+                $keys=['announcement','brand_subtitle','hero_title','hero_tagline','reference_mode','craft_image','brand','phone','address','hero_image','portrait_image','work_image_1','work_image_2','work_image_3','hero_intro','seo_description','policy','notification_email'];
                 $values=[];
                 foreach($keys as $key) {
                     $value=trim((string)($_POST[$key]??setting($key)));
@@ -18,6 +18,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
                     if(str_contains($key,'image') && $value!=='' && (!imageUrl($value))) throw new DomainException('Ảnh phải là URL HTTPS hợp lệ.');
                     $values[$key]=$value;
                 }
+                if(!in_array($values['reference_mode'],['','0','1'],true)) throw new DomainException('Ảnh tham khảo: nhập 1 để bật hoặc 0 để tắt.');
                 if($values['brand']==='') throw new DomainException('Cần nhập tên thương hiệu.');
                 db()->beginTransaction();
                 try {
