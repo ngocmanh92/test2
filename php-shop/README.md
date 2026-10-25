@@ -1,22 +1,44 @@
-# Website đá mỹ nghệ — danh mục mẫu & yêu cầu báo giá
+# Nghệ nhân Văn Nho — website đá mỹ nghệ PHP
 
-Giao diện tiếng Việt tham khảo cách tổ chức nội dung của các website đá mỹ nghệ Non Nước. Tên mặc định “ĐÁ MỸ NGHỆ” là tên tạm, không đại diện cho cơ sở trong nguồn tham khảo.
+Website tiếng Việt cho danh mục tác phẩm, nội dung làng nghề, hồ sơ nghệ nhân và tư vấn chế tác. PHP 8.2–8.4 + SQLite, không cần Composer/Node.js.
 
-## Phần mới
+## Chức năng hiện có
 
-- Trang chủ: giới thiệu, nhóm mẫu, tìm kiếm, lọc danh mục, phân trang, câu chuyện làng nghề và lời mời tư vấn.
-- Trang chi tiết mẫu, trang giới thiệu làng nghề, quy trình đề xuất và liên hệ.
-- Sáu nhóm mẫu: Tượng Phật, Tượng Công giáo, Linh vật đá, Đồ thờ đá, Đá sân vườn, Tượng nghệ thuật.
-- Giá công khai chuyển thành “Liên hệ báo giá”; không công bố giá hoặc phí vận chuyển mẫu như giá thương mại thực tế.
-- Phiếu tư vấn không yêu cầu đăng nhập: mẫu, họ tên, điện thoại, chất liệu, kích thước, địa điểm và nội dung. Có CSRF, đồng ý liên hệ, honeypot và khoảng cách gửi tối thiểu 60 giây mỗi session.
-- Admin: mục “Yêu cầu báo giá”, trạng thái Mới / Đã liên hệ / Đã báo giá / Đã đóng.
-- Chưa gửi email/SMS tự động. Yêu cầu chỉ được lưu trong database và hiển thị trong admin. Chưa có upload ảnh tham khảo hoặc gửi tệp đính kèm.
+| Nhóm | Chức năng |
+| --- | --- |
+| Sản phẩm | Thêm/sửa/ẩn, giá/tồn kho cho luồng bán hàng cũ; ảnh bìa và bộ ảnh nhiều ảnh, thứ tự gallery |
+| Ảnh | Upload JPEG/PNG/WebP tối đa 5 MB, 24 megapixel; kiểm tra MIME và kích thước; thư viện phân trang; gắn/gỡ ảnh khỏi sản phẩm |
+| Danh mục | Thêm/sửa/xóa danh mục trống, danh mục cha/con, thứ tự; chặn chu trình; lọc danh mục cha bao gồm con |
+| Nội dung | Bài viết, công trình, thành tích, trang giới thiệu; nháp/đăng/gỡ xuất bản; ảnh và SEO riêng; nội dung văn bản được escape |
+| Trang giới thiệu | Nội dung loại `page` dùng slug `about`, `artist`, `services`, `process` thay phần mặc định sau khi xuất bản |
+| Trang chủ & cấu hình | Tên thương hiệu, hotline, địa chỉ, ảnh đầu trang/chân dung/tác phẩm, lời giới thiệu đầu trang, mô tả SEO và chính sách |
+| Báo giá | Phiếu khách hàng, tìm/lọc/phân trang, trạng thái; nhiều hạng mục, số lượng, đơn giá, vận chuyển, đặt cọc dự kiến, hiệu lực, ghi chú nội bộ |
+| In báo giá | Bản in riêng, tiếng Việt, không chứa ghi chú nội bộ; nút in mở hộp thoại trình duyệt để Lưu thành PDF; chưa có bộ dựng PDF phía server |
+| Nhân viên | Thêm/sửa, khóa, đổi quyền/mật khẩu, thu hồi phiên; bảo vệ chủ sở hữu cuối cùng và chống tự hạ quyền |
+| Bảo mật | Session strict mode, CSRF, PDO prepared statements, escape HTML, giới hạn đăng nhập; 2FA TOTP, chống dùng lại mã, khóa 15 phút sau 5 lần sai |
+| Quên mật khẩu | Token băm, một lần dùng, 30 phút, giới hạn yêu cầu, email qua hàng đợi; thay mật khẩu thu hồi phiên, giữ nguyên 2FA |
+| Nhật ký | Ghi người thực hiện, sự kiện và đối tượng; phân trang; không ghi mật khẩu, OTP hoặc token reset |
+| Sao lưu | SQLite nhất quán qua VACUUM INTO; ZIP gồm database và toàn bộ ảnh; tải xuống qua POST dành cho chủ sở hữu |
+| Khôi phục | ZIP/SQLite, xác nhận mật khẩu và nhập KHOI PHUC; kiểm tra integrity, foreign keys, schema, chủ sở hữu và tệp ảnh; chống path traversal/bomb; sao lưu trước khi thay, thu hồi phiên/token cũ |
+| Email | Hàng đợi, trạng thái chờ/gửi/lỗi; thông báo có yêu cầu báo giá mới và liên kết quên mật khẩu; worker CLI dùng mail transport của server |
+| Luồng cũ | Giỏ hàng, tài khoản, COD/chuyển khoản thủ công, lịch sử đơn, tồn kho, mã giảm giá; không là luồng chính của website tư vấn đá |
+
+## Phân quyền
+
+| Quyền | Truy cập |
+| --- | --- |
+| Chủ sở hữu (`owner`) | Toàn bộ quản trị, nhân viên, cấu hình, nhật ký, backup, email |
+| Biên tập (`editor`) | Nội dung, ảnh, sản phẩm và danh mục; không xem tài chính, báo giá, nhân viên hoặc backup |
+| Kinh doanh (`sales`) | Báo giá, đơn hàng, khách hàng, mã giảm giá; không sửa nội dung, quyền nhân viên hoặc cấu hình |
+
+Tài khoản nhân viên vẫn dùng `role=admin` để tương thích schema cũ, kết hợp cột `access_level` để kiểm soát quyền tại mỗi route/action; không chỉ ẩn menu. Khách hàng không truy cập quản trị.
 
 ## Cài mới
 
-Yêu cầu PHP 8.2+, PDO SQLite. Chạy trong `php-shop/`:
+Yêu cầu PHP 8.2+ với PDO SQLite, fileinfo, session và extension ZIP để backup/restore cả ảnh. Thư mục `storage/` phải ghi được bởi tài khoản chạy PHP; không cấp quyền 777.
 
 ```bash
+cd php-shop
 export ADMIN_EMAIL='admin@example.com'
 read -rsp 'Admin password: ' ADMIN_PASSWORD
 export ADMIN_PASSWORD
@@ -25,29 +47,51 @@ unset ADMIN_PASSWORD
 php -S localhost:8000 -t public
 ```
 
-Mật khẩu tối thiểu 12 ký tự. Bộ cài không ghi đè database đã tồn tại. Sản phẩm mẫu có giá và tồn kho bằng 0, dùng để bắt đầu trao đổi, không phải hàng có sẵn.
+Mật khẩu 12–72 byte. Không có tài khoản cố định trong repo. Bộ cài tạo 6 mẫu tham khảo với giá/tồn kho bằng 0; không phải hàng có sẵn. Chưa có ảnh thật, hotline và địa chỉ cơ sở. Không công bố website như cửa hàng đã sẵn sàng khi chưa cập nhật thông tin thật.
 
-## Nâng cấp database đã cài
+## Nâng cấp database đã có
 
-Sao lưu database trước, rồi chạy `php bin/migrate-stone.php`. Script chỉ tạo bảng yêu cầu báo giá nếu chưa có; không xóa, đổi tên hoặc sửa giá sản phẩm/đơn hàng cũ. Nếu đang dùng dữ liệu Mộc Shop cũ, cần sửa danh mục và sản phẩm trong database trước khi công bố; migration không tự thay dữ liệu kinh doanh.
+1. Sao lưu database cùng toàn bộ `storage/media/`, tạm ngừng truy cập và worker ghi dữ liệu.
+2. Đưa mã mới lên, giữ nguyên database và storage.
+3. Chạy `php bin/migrate-stone.php`. Script tạo bảng/cột/index còn thiếu, có thể chạy lại, không đổi giá hoặc xóa dữ liệu cũ. Script từ chối chạy khi có request giữ maintenance lock.
+4. Đăng nhập lại. Tài khoản quản trị cũ mặc định là chủ sở hữu; khách hàng cũ vẫn là khách hàng.
+5. Nếu vẫn dùng danh mục/sản phẩm từ demo Mộc Shop, sửa dữ liệu đó trước khi công bố; migration không tự thay nội dung kinh doanh.
 
-## Thông tin cần cấu hình
+Schema quản trị nằm ở `app/migrations.php`, được gọi bởi cả bộ cài và công cụ nâng cấp. File `database.sql` chứa phần lõi.
 
-| Biến môi trường | Nội dung |
+## Cấu hình hosting
+
+| Biến môi trường | Ý nghĩa |
 | --- | --- |
-| SHOP_NAME | Tên cơ sở thật |
-| SHOP_PHONE | Hotline thật |
-| SHOP_ADDRESS | Địa chỉ thật |
-| SHOP_DB | Đường dẫn SQLite; mặc định storage/shop.sqlite |
-| BANK_INSTRUCTIONS | Thông tin chuyển khoản cho luồng đơn hàng cũ |
+| SHOP_STORAGE | Thư mục dữ liệu riêng, mặc định `storage/`; cần đặt giống nhau cho web và CLI |
+| SHOP_DB | Đường dẫn tuyệt đối SQLite; mặc định `storage/shop.sqlite` |
+| SHOP_NAME / SHOP_PHONE / SHOP_ADDRESS | Giá trị thương hiệu ban đầu; cấu hình trong admin được ưu tiên |
+| SHOP_URL | URL HTTPS chính thức, ví dụ `https://demo.thegioifx.com`; cần cho liên kết quên mật khẩu |
+| MAIL_FROM | Email gửi hợp lệ thuộc miền bạn quản lý; cần cho worker và reset mật khẩu |
+| BANK_INSTRUCTIONS | Thông tin chuyển khoản của luồng đơn hàng cũ |
 
-Ứng dụng không tự đọc `.env`. Đặt biến trong môi trường server/hosting. Document root phải là `php-shop/public/`, bật HTTPS và không công khai database/storage/app. PHP development server chỉ dùng phát triển.
+Không tự đọc `.env`. Cấu hình biến môi trường trong môi trường thực thi của cả web PHP và cron. Bật HTTPS; document root **phải là `php-shop/public/`**. `storage`, `app`, tệp backup, khóa 2FA và database nằm ngoài web root. Không commit hoặc upload toàn bộ storage thật lên GitHub.
 
-## Hình ảnh và nội dung
+Đặt `upload_max_filesize` ít nhất 50M và `post_max_size` lớn hơn 50M để dùng giới hạn backup của ứng dụng; giới hạn riêng cho ảnh vẫn là 5 MB. Gói upload ZIP/SQLite tối đa 50 MB; tổng giải nén ZIP tối đa 200 MB/10.000 tệp, database 50 MB. Với dữ liệu lớn hơn cần quy trình backup/restore trên server riêng.
 
-Hiện dùng placeholder ảnh có nhãn rõ ràng; khối đá trang đầu là hình trừu tượng CSS. Thêm ảnh được phép sử dụng bằng trường URL HTTPS trong admin. Chưa có gallery nhiều ảnh hoặc trường thông số có cấu trúc; có thể ghi thông số đã xác nhận trong mô tả sản phẩm. Không sao chép ảnh, nội dung nguyên văn, hotline, địa chỉ, tuổi nghề, số công trình hoặc bảo hành của nguồn tham khảo sang thương hiệu người dùng.
+`public/.htaccess` bật cache/nén khi Apache/LiteSpeed hỗ trợ. Khi dùng Nginx cần cấu hình tương đương. PHP development server không kiểm chứng được `.htaccess`; kiểm tra header thực tế sau triển khai. Truy vấn cá nhân dùng `private, no-store`; ảnh thư viện có URL riêng, cache lâu và không cho ghi đè nội dung cùng URL.
 
-Quy trình trên website là đề xuất tư vấn, chưa phải cam kết dịch vụ. Chủ cơ sở cần xác nhận thông tin vật liệu, quy trình, chính sách, ảnh thật, giá và quyền sử dụng nội dung trước khi mở bán. Chưa tạo hồ sơ công trình giả; trang dự án sẽ cần ảnh và mô tả được cung cấp.
+## Hướng dẫn quản trị
+
+- **Ảnh:** upload tại Thư viện ảnh, sao chép `/media.php?id=…` vào trường ảnh bìa, bài viết hoặc cấu hình. Nhập ID ảnh và sản phẩm để tạo gallery. Gỡ liên kết không xóa tệp gốc; hiện không có nút xóa hẳn tệp để tránh làm hỏng các bản backup cũ.
+- **Nội dung:** dùng các loại bài viết/công trình/thành tích, hoặc `page` để thay trang giới thiệu. Định dạng hiện là văn bản thuần, xuống dòng; HTML/script không chạy. Chưa có trình soạn thảo rich text hoặc quản lý tệp bản vẽ.
+- **Báo giá:** mở “Lập báo giá / ghi chú” từ danh sách. Thêm hạng mục, lưu phí giao, cọc dự kiến và hiệu lực. Đây chưa phải thu tiền/đối soát cọc, hóa đơn hoặc hợp đồng. Bản in không bao gồm ghi chú nội bộ.
+- **2FA:** vào Bảo mật, xác nhận mật khẩu, nhập khóa thủ công vào ứng dụng authenticator TOTP (SHA-1, 6 số, chu kỳ 30 giây), nhập mã để bật. Cửa sổ chấp nhận ±1 bước, không dùng lại bước đã xác thực. Không có QR hay recovery codes tự động; giữ khóa thiết lập ở nơi an toàn. Khi mất thiết bị, chủ hosting xác minh danh tính rồi dùng `php bin/recover-2fa.php email --confirm`; công cụ thu hồi phiên và ghi nhật ký. Không dùng script này như chức năng công khai.
+- **Khôi phục:** chỉ nhận backup cùng phiên bản schema; dữ liệu hiện tại được sao lưu trước, tệp ảnh có tên bất biến. Sau khôi phục mọi phiên và token reset cũ vô hiệu, thư đang chờ bị hủy để không gửi lại yêu cầu từ quá khứ. Với backup SQLite riêng, ảnh vẫn cần còn trên đĩa. Tệp backup không mã hóa, chứa dữ liệu khách hàng và bí mật xác thực: bảo vệ như database gốc. Không chia sẻ liên kết công khai; chủ hosting quản lý dung lượng và vòng đời backup ngoài ứng dụng.
+
+## Gửi email / quên mật khẩu
+
+1. Cấu hình `MAIL_FROM`, `SHOP_URL`, mail transport cho PHP và DNS gửi thư của miền (SPF/DKIM theo nhà cung cấp).
+2. Nhập email nhận báo giá trong Cấu hình website.
+3. Cấu hình cron chạy `php /duong-dan/php-shop/bin/send-mail.php`, ví dụ mỗi phút. Đây là hướng dẫn; chưa có cron hoặc email thật nào được kích hoạt bởi việc cập nhật mã.
+4. Xem trạng thái trong mục Email. `sent` nghĩa mail transport chấp nhận, không đảm bảo thư vào inbox. Worker xóa nội dung hàng đợi sau khi xử lý để giảm lưu giữ token. Khi gửi lỗi, người dùng yêu cầu link mới sau thời gian giới hạn; chưa có nút retry email cũ.
+
+Chưa cấu hình mail thì chức năng quên mật khẩu không thể gửi liên kết. Không trả token reset trên giao diện hoặc nhật ký. Chưa có tích hợp SMTP/API bên thứ ba hoặc SMS.
 
 ## Kiểm thử
 
@@ -55,52 +99,24 @@ Quy trình trên website là đề xuất tư vấn, chưa phải cam kết dị
 find app public bin tests -name '*.php' -print0 | xargs -0 -n1 php -l
 php tests/run.php
 python3 tests/smoke.py
+python3 tests/admin_features.py
 ```
 
-HTTP test bao gồm gửi phiếu tư vấn và kiểm tra admin nhận được yêu cầu. Các bài kiểm tra checkout cũ dùng fixture riêng để tiếp tục kiểm tra hồi quy.
+CI kiểm tra PHP 8.2/8.3/8.4 với `pdo_sqlite`, `fileinfo`, `zip`. Test quản trị dùng database tạm, không gửi email thực tế; kiểm tra migration lặp lại, ảnh/MIME/gallery, danh mục chống chu trình, CMS nháp/đăng/XSS, phân quyền, tổng báo giá/bản in, token reset một lần, TOTP/replay/khóa tài khoản, ZIP backup và khôi phục/thu hồi phiên. Chưa có kiểm thử trực quan, Lighthouse, kiểm thử trên Hostinger hoặc đo tải production.
 
-## Luồng cửa hàng cũ
+## Thiết kế và dữ liệu tham khảo
 
-Các route giỏ hàng, tài khoản, checkout COD/chuyển khoản và đơn hàng cũ vẫn được giữ cho dữ liệu cũ; không đặt làm lời kêu gọi chính trên giao diện mới. Quy tắc giao hàng cố định trong luồng này chỉ là cấu hình demo, không áp dụng cho yêu cầu báo giá. Chưa tích hợp cổng thanh toán, giao vận, email/SMS, bản vẽ, hợp đồng hoặc thanh toán đặt cọc.
-
-## Nguồn tham khảo
-
+Website lấy cảm hứng tổ chức danh mục từ:
 - https://danguyencong.com/lang-nghe-da-my-nghe-non-nuoc/
 - https://www.phanthien.com/tin-tuc/thuyet-minh-ve-lang-da-non-nuoc-ngu-hanh-son-da-nang-n38.html
 - https://dieukhacdaanhnhat.com/danh-muc/tuong-cong-giao/
 - https://damynghenonnuocdn.com/
-- https://danonnuoc.vn/
-- https://tuongphatdamynghe.com/
 
-Đọc ngày 24/10/2026. Tham khảo phân nhóm sản phẩm, nội dung làng nghề và luồng tư vấn; nội dung website được viết mới.
-
-## Yêu cầu thương hiệu Văn Nho (ảnh tài liệu người dùng)
-
-Đã bổ sung: đầu trang “Nghệ nhân Văn Nho – Người gửi hồn vào Đá”; hồ sơ nghệ nhân; tác phẩm đạt giải và liên kết ba bài báo; các dòng Công giáo, Phật giáo, nội thất/cảnh quan; nội dung giá, chất lượng, tư vấn đặt riêng, bản vẽ và nhu cầu kết cấu.
-
-Cấu hình admin → Cấu hình website cho tên, hotline, địa chỉ, ảnh đầu trang, chân dung và ba ảnh tác phẩm/quá trình chế tác. Giá trị trong admin ưu tiên hơn biến môi trường. Khi nâng cấp database đã cài, chạy lại `php bin/migrate-stone.php` để thêm `site_settings`.
-
-Ảnh chụp tài liệu IMG_0118.png có hình thu nhỏ, không được dùng như ảnh sản phẩm gốc. Các vị trí ảnh có nhãn chờ cập nhật cho đến khi cung cấp URL ảnh thật. Địa chỉ và hotline chưa được cung cấp. Mục 7 chỉ đọc được phần thiết kế bản vẽ, tính toán kết cấu; phần bên dưới bị cắt nên chưa suy diễn yêu cầu khác.
-
-Thông tin “3 lần đoạt giải nhất” trong tài liệu chưa được xác minh: nguồn xác nhận giải Nhì “Đá nở hoa” năm 2023 và giải Nhất “Huyền thoại Ngũ Hành Sơn” năm 2026. Website ghi từng thành tích đã đối chiếu, không dùng “đứng đầu làng nghề”. Cam kết độ bền/màu sắc được diễn đạt theo loại đá, môi trường và bảo dưỡng, không bảo đảm tuyệt đối “không xuống màu”. Nhu cầu đội ngũ thiết kế/kết cấu được thể hiện qua luồng tư vấn, chưa công bố tên chuyên viên hay chứng chỉ khi chưa có hồ sơ.
-
-Nguồn hồ sơ nghệ nhân:
+Hồ sơ nghệ nhân tham khảo ba bài báo người dùng cung cấp:
 - https://vnexpress.net/nguoi-nan-phoi-cho-hang-tram-tuong-da-non-nuoc-5130767.html
 - https://nhandan.vn/o-lai-de-tra-on-lang-da-post881505.html
 - https://thanhnien.vn/huyen-thoai-ngu-hanh-son-duoc-khac-vao-da-doat-giai-nhat-cuoc-thi-dieu-khac-185260827114406794.htm
 
-## Nâng cấp tối ưu ngày 25/10/2026
+Đã đọc ngày 24/10/2026. Chỉ ghi thành tích đã đối chiếu: Đá nở hoa — giải Nhì 2023, Huyền thoại Ngũ Hành Sơn — giải Nhất 2026; không dùng tuyên bố chưa xác minh “3 lần giải nhất”. Không sao chép ảnh/địa chỉ/hotline của nguồn khác. Ảnh tài liệu người dùng chưa thay ảnh gốc. Phần cuối mục 7 bị cắt trong tài liệu chưa được suy diễn thêm.
 
-- Báo giá: tìm theo tên/điện thoại, lọc trạng thái, 25 mục mỗi trang, xem được toàn bộ dữ liệu thay vì giới hạn 200 bản ghi. Các ký tự `%`/`_` được tìm theo nghĩa đen trong bộ lọc admin.
-- Phân trang danh mục giới hạn số liên kết (tối đa 7) và giữ nguyên bộ lọc; số trang vượt phạm vi được đưa về trang cuối.
-- Trang sản phẩm, nghệ nhân và dịch vụ có tiêu đề SEO riêng, mô tả và Open Graph; trang tìm kiếm/phiếu báo giá không lập chỉ mục. Khu quản trị/tài khoản dùng noindex. Chưa có canonical/sitemap vì tên miền triển khai chưa được cấu hình.
-- Menu điện thoại dùng HTML details, không phụ thuộc JavaScript; thêm liên kết bỏ qua điều hướng, focus bàn phím, hỗ trợ giảm chuyển động và nút tư vấn cố định.
-- Ảnh danh mục khai báo kích thước, lazy loading và giải mã bất đồng bộ; ảnh đầu trang được ưu tiên tải. Kích thước hiển thị thực tế còn phụ thuộc ảnh gốc được cung cấp.
-- CSS có phiên bản theo thời gian sửa file. `public/.htaccess` bật nén/caching file tĩnh khi Apache/LiteSpeed hỗ trợ; tắt liệt kê thư mục. PHP luôn trả `Cache-Control: private, no-store` để tránh cache phiên, phiếu và dữ liệu cá nhân. Cấu hình này không được kiểm tra bằng PHP development server; cần xác minh header trên hosting sau triển khai.
-- Giỏ hàng đọc sản phẩm bằng một truy vấn thay vì mỗi sản phẩm một truy vấn. Thêm index cho danh mục đang hiển thị và trạng thái báo giá.
-- Từ chối GET/POST dạng mảng và giá trị quá dài với HTTP 400, session strict mode; lỗi ngoài dự kiến trả thông báo chung, chi tiết ghi log phía server.
-- Đổi hồ sơ chỉ ghi tên/mật khẩu sau khi kiểm tra đầy đủ, tránh lưu một phần khi mật khẩu hiện tại sai. Đăng ký/đổi mật khẩu giới hạn 12–72 byte theo cơ chế băm hiện tại.
-
-**Nâng cấp database cũ:** sao lưu và chạy lại `php bin/migrate-stone.php` để tạo index còn thiếu; không xóa dữ liệu. Không có thay đổi nào được tự động triển khai lên Hostinger.
-
-Kiểm thử bổ sung: đầu vào sai định dạng, private cache header, metadata, đổi hồ sơ bị từ chối không sửa tên, quyền cấu hình, phân trang/tìm kiếm/lọc báo giá và số liên kết danh mục lớn. Chưa có điểm Lighthouse hoặc đo tải production, nên không đưa ra phần trăm tăng tốc.
+Còn cần dữ liệu thật, điều kiện dịch vụ và kiểm thử triển khai. Chưa có thanh toán online, giao vận, hợp đồng điện tử, đối soát đặt cọc, nhiều kho hoặc ứng dụng kế toán. Các phần này không được mô tả là đã hoàn thành.

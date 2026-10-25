@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 $file=sys_get_temp_dir().'/shop-test-'.bin2hex(random_bytes(8)).'.sqlite';
-putenv('SHOP_DB='.$file); putenv('ADMIN_EMAIL=admin@example.test'); putenv('ADMIN_PASSWORD=test-password-123456');
+putenv('SHOP_STORAGE='.$file.'-storage'); putenv('SHOP_DB='.$file); putenv('ADMIN_EMAIL=admin@example.test'); putenv('ADMIN_PASSWORD=test-password-123456');
 require __DIR__.'/../bin/install.php';
 query('UPDATE products SET price=590000,stock=30 WHERE id=1');
 function check(bool $v,string $label): void { if(!$v) throw new RuntimeException('FAIL '.$label); echo 'PASS '.$label."\n"; }
@@ -27,5 +27,6 @@ try {
     try { totals([$p],'INVALID'); throw new RuntimeException('should reject'); } catch(DomainException $e) {}
     check(e('<script>')==='&lt;script&gt;','HTML escaping');
     check(substr_count(pageLinks(500,10000),'<a ')<=7,'bounded pagination for large catalogs');
+    check(totpCode(base32encode('12345678901234567890'),1)==='287082','TOTP RFC vector (6 digits)');
     echo "All integration checks passed.\n";
-} finally { @unlink($file); }
+} finally { @unlink($file); @rmdir($file.'-storage'); }

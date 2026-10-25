@@ -1,7 +1,7 @@
 # Nghệ nhân Văn Nho — Người gửi hồn vào Đá
 
-Website đá mỹ nghệ PHP trong [`php-shop/`](php-shop/README.md). Gồm bộ sưu tập, làng nghề, hồ sơ nghệ nhân, tác phẩm đạt giải có nguồn báo chí, dịch vụ, quy trình, liên hệ và phiếu báo giá. Quản trị viên quản lý yêu cầu và cấu hình thương hiệu, hotline, địa chỉ, ảnh.
+Website đá mỹ nghệ PHP trong [`php-shop/`](php-shop/README.md): danh mục và bộ ảnh sản phẩm, CMS bài viết/công trình/thành tích, phiếu và báo giá chi tiết, cấu hình nội dung/SEO, nhân viên và phân quyền, nhật ký, 2FA, hàng đợi email, sao lưu/khôi phục database cùng ảnh.
 
-Chạy `cd php-shop` trước khi cài đặt. Document root: `php-shop/public/`. Database đã cài cần chạy `php bin/migrate-stone.php`. Xem [hướng dẫn chi tiết](php-shop/README.md).
+Cài mới hoặc nâng cấp: xem [README](php-shop/README.md). Chạy trong `php-shop/`; database đã cài cần sao lưu và chạy `php bin/migrate-stone.php`. Document root: `php-shop/public/`.
 
-Ảnh gốc, hotline và địa chỉ chờ chủ cơ sở cung cấp. Chưa tích hợp thanh toán online, email/SMS hoặc upload ảnh trực tiếp.
+Email/quên mật khẩu cần MAIL_FROM, SHOP_URL, mail transport và cron thật. Bản in báo giá hỗ trợ Lưu thành PDF qua trình duyệt. ZIP backup cần extension zip. Hotline, địa chỉ và ảnh gốc chờ cung cấp. Chưa triển khai Hostinger hoặc tích hợp thanh toán online.

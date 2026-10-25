@@ -15,7 +15,7 @@ import urllib.request
 
 root = Path(__file__).resolve().parents[1]
 with tempfile.TemporaryDirectory() as tmp:
-    env = dict(os.environ, SHOP_DB=tmp+'/test.sqlite', ADMIN_EMAIL='admin@example.test', ADMIN_PASSWORD=secrets.token_urlsafe(20))
+    env = dict(os.environ, SHOP_STORAGE=tmp+'/storage', SHOP_DB=tmp+'/test.sqlite', ADMIN_EMAIL='admin@example.test', ADMIN_PASSWORD=secrets.token_urlsafe(20))
     subprocess.run(['php', str(root/'bin/install.php')], env=env, check=True)
     with sqlite3.connect(env['SHOP_DB']) as db:
         db.execute('UPDATE products SET price=590000,stock=30 WHERE id=1')

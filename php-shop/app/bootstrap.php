@@ -1,8 +1,11 @@
 <?php
 declare(strict_types=1);
 const ROOT = __DIR__ . '/..';
+define('STORAGE',getenv('SHOP_STORAGE')?:ROOT.'/storage');
 if (PHP_SAPI !== 'cli') {
     ini_set('display_errors','0');
+    $GLOBALS['maintenance_lock']=fopen(STORAGE.'/maintenance.lock','c');
+    if(!$GLOBALS['maintenance_lock'] || !flock($GLOBALS['maintenance_lock'],LOCK_SH)) { http_response_code(503); exit('Website đang bảo trì.'); }
     set_exception_handler(function(Throwable $ex): void {
         error_log((string)$ex);
         while(ob_get_level()>0) ob_end_clean();
@@ -18,7 +21,7 @@ if (PHP_SAPI !== 'cli') {
     }
     ini_set('session.use_strict_mode','1');
 }
-if (PHP_SAPI !== 'cli') {
+if (PHP_SAPI !== 'cli' && !defined('PUBLIC_MEDIA')) {
     session_set_cookie_params(['httponly'=>true,'secure'=>!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off','samesite'=>'Lax']);
     session_start();
     header('Content-Type: text/html; charset=UTF-8');
@@ -30,7 +33,7 @@ if (PHP_SAPI !== 'cli') {
 function db(): PDO {
     static $pdo;
     if (!$pdo) {
-        $file=getenv('SHOP_DB') ?: ROOT.'/storage/shop.sqlite';
+        $file=getenv('SHOP_DB') ?: STORAGE.'/shop.sqlite';
         if (!is_file($file)) throw new RuntimeException('Chưa cài đặt. Chạy php bin/install.php trước.');
         $pdo=new PDO('sqlite:'.$file,null,null,[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION,PDO::ATTR_DEFAULT_FETCH_MODE=>PDO::FETCH_ASSOC]);
         $pdo->exec('PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000');
@@ -40,7 +43,12 @@ function db(): PDO {
 function query(string $sql,array $args=[]): PDOStatement { $s=db()->prepare($sql); $s->execute($args); return $s; }
 function e(mixed $v): string { return htmlspecialchars((string)$v, ENT_QUOTES,'UTF-8'); }
 function money(int $v): string { return number_format($v,0,',','.').' ₫'; }
-function user(): ?array { return isset($_SESSION['uid']) ? (query('SELECT id,name,email,role FROM users WHERE id=?',[$_SESSION['uid']])->fetch() ?: null) : null; }
+function user(): ?array {
+    if(!isset($_SESSION['uid'])) return null;
+    $u=query('SELECT id,name,email,role,access_level,active,auth_version,totp_secret FROM users WHERE id=?',[$_SESSION['uid']])->fetch();
+    if(!$u || !$u['active'] || (int)($_SESSION['auth_version']??0)!==(int)$u['auth_version']) { unset($_SESSION['uid']); return null; }
+    unset($u['totp_secret']); return $u;
+}
 function redirect(string $url): never { header('Location: '.$url); exit; }
 function csrf(): string { return $_SESSION['csrf'] ??= bin2hex(random_bytes(32)); }
 function token(): string { return '<input type="hidden" name="csrf" value="'.e(csrf()).'">'; }
@@ -136,3 +144,5 @@ function pageLinks(int $current,int $pages,array $params=[],string $anchor=''): 
     }
     return $html.'</nav>';
 }
+
+require_once ROOT.'/app/admin-tools.php';

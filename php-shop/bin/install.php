@@ -2,7 +2,8 @@
 declare(strict_types=1);
 require __DIR__.'/../app/bootstrap.php';
 if (PHP_SAPI!=='cli') exit;
-$file=getenv('SHOP_DB') ?: ROOT.'/storage/shop.sqlite';
+if(!is_dir(STORAGE) && !mkdir(STORAGE,0700,true)) { fwrite(STDERR,"Không tạo được thư mục storage.\n"); exit(1); }
+$file=getenv('SHOP_DB') ?: STORAGE.'/shop.sqlite';
 if (is_file($file)) { fwrite(STDERR,"Database đã tồn tại, không ghi đè.\n"); exit(1); }
 $email=getenv('ADMIN_EMAIL') ?: '';
 $pass=getenv('ADMIN_PASSWORD') ?: '';
@@ -14,4 +15,5 @@ $pdo->exec("INSERT INTO categories(name) VALUES('Tượng Phật'),('Tượng C�
 $s=$pdo->prepare('INSERT INTO products(category_id,name,description,price,stock,image) VALUES(?,?,?,?,?,?)');
 foreach ([[1,'Tượng Quan Âm — mẫu tham khảo','Thiết kế tượng Quan Âm. Chất liệu, kích thước, bệ tượng và chi tiết hoàn thiện được thống nhất khi tư vấn.',0,0,''],[2,'Tượng Đức Mẹ — mẫu tham khảo','Thiết kế tượng Đức Mẹ bằng đá. Tư vấn tỷ lệ, chất liệu và vị trí lắp đặt trước khi báo giá.',0,0,''],[3,'Cặp sư tử đá — mẫu tham khảo','Linh vật trang trí công trình. Cần xác nhận kích thước, loại đá và phương án vận chuyển.',0,0,''],[4,'Lư hương đá — mẫu tham khảo','Mẫu đồ thờ đá. Kích thước và hoa văn được trao đổi theo không gian sử dụng.',0,0,''],[5,'Đài phun nước — mẫu tham khảo','Thiết kế cảnh quan bằng đá. Báo giá riêng phần đá, thiết bị nước và thi công.',0,0,''],[6,'Tượng nghệ thuật — mẫu tham khảo','Tư vấn chế tác theo ý tưởng, bản vẽ hoặc hình ảnh mẫu của khách hàng.',0,0,'']] as $p) $s->execute($p);
 $pdo->exec("INSERT INTO coupons(code,percent,min_total,expires_at) VALUES('WELCOME10',10,200000,date('now','+1 year'))");
+require ROOT.'/app/migrations.php'; migrateAdmin($pdo);
 chmod($file,0600); echo "Cài đặt xong. Chạy php -S localhost:8000 -t public\n";
