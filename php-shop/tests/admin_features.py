@@ -107,6 +107,10 @@ with tempfile.TemporaryDirectory() as tmp:
             assert http(editor,'/?page=quote_print&id='+str(qid))[0]==403
             post(sales,'quote_detail',dict(quote_id=qid,shipping=200000,deposit=9000000,valid_until='',internal_notes='X'))
             assert scalar('SELECT deposit FROM quote_requests WHERE id=?',(qid,))==500000
+            for invalid_date in ['2027-02-29','2027-99-99']:
+                status, body, _=post(sales,'quote_detail',dict(quote_id=qid,shipping=200000,deposit=500000,valid_until=invalid_date,internal_notes='X'),path='/?page=admin&tab=quote_edit&id='+str(qid))
+                assert status==200 and 'Ngày không hợp lệ' in body.decode()
+                assert scalar('SELECT valid_until FROM quote_requests WHERE id=?',(qid,))=='2027-01-01'
             # Password reset tokens are hashed, expire and are single use. 2FA remains independent.
             post(visitor,'forgot',dict(email='sales@example.test'),path='/?page=forgot')
             mailbody=scalar("SELECT body FROM notifications WHERE subject='Đặt lại mật khẩu' ORDER BY id DESC LIMIT 1")

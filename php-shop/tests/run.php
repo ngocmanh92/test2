@@ -28,5 +28,9 @@ try {
     check(e('<script>')==='&lt;script&gt;','HTML escaping');
     check(substr_count(pageLinks(500,10000),'<a ')<=7,'bounded pagination for large catalogs');
     check(totpCode(base32encode('12345678901234567890'),1)==='287082','TOTP RFC vector (6 digits)');
+    check(searchFold('TƯỢNG QUAN ÂM – Đá')==='tuong quan am – da','Vietnamese search folding');
+    check(searchFold("Qua\u{0301}n A\u{0302}m")==='quan am','decomposed Unicode search');
+    check(!validPhone('()--()--') && !validPhone('1234567890123456') && validPhone('+84 (90) 123-4567'),'phone requires 8 to 15 actual digits');
+    check(validDate('2028-02-29') && !validDate('2027-02-29') && !validDate('2027-99-99'),'calendar date validation');
     echo "All integration checks passed.\n";
 } finally { @unlink($file); @rmdir($file.'-storage'); }

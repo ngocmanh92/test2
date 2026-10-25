@@ -273,3 +273,8 @@ footer strong { text-transform: uppercase; letter-spacing: 2px; }
 /* Preserve the reference typography at mobile breakpoints. */
 @media(max-width:800px){.hero h1{font-size:53px}}
 @media(max-width:420px){.hero h1{font-size:44px}}
+
+/* Search feedback and long content stay readable in narrow layouts. */
+.search-summary{font-size:13px;margin:0 0 20px}.search-summary a{display:inline-block;min-height:44px;padding-top:10px}
+.category-links a{display:inline-flex;align-items:center;min-height:44px}.quote-form,.quote-aside,.detail>div{min-width:0}.detail p,.quote-aside p{overflow-wrap:anywhere}
+@media(max-width:800px){.mobile-quote{bottom:max(12px,env(safe-area-inset-bottom))}body{padding-bottom:calc(65px + env(safe-area-inset-bottom))}}

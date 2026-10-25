@@ -37,11 +37,30 @@ function db(): PDO {
         if (!is_file($file)) throw new RuntimeException('Chưa cài đặt. Chạy php bin/install.php trước.');
         $pdo=new PDO('sqlite:'.$file,null,null,[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION,PDO::ATTR_DEFAULT_FETCH_MODE=>PDO::FETCH_ASSOC]);
         $pdo->exec('PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000');
+        $pdo->sqliteCreateFunction('search_fold','searchFold',1,PDO::SQLITE_DETERMINISTIC);
     }
     return $pdo;
 }
 function query(string $sql,array $args=[]): PDOStatement { $s=db()->prepare($sql); $s->execute($args); return $s; }
 function e(mixed $v): string { return htmlspecialchars((string)$v, ENT_QUOTES,'UTF-8'); }
+function validDate(string $value): bool {
+    return preg_match('/^(\d{4})-(\d{2})-(\d{2})$/D',$value,$parts)===1
+        && checkdate((int)$parts[2],(int)$parts[3],(int)$parts[1]);
+}
+function validPhone(string $value): bool {
+    if(!preg_match('/^\+?[0-9 ()-]{8,20}$/D',$value)) return false;
+    $digits=preg_replace('/[^0-9]/','',$value);
+    return strlen($digits)>=8 && strlen($digits)<=15;
+}
+function searchFold(string $value): string {
+    $groups=['a'=>'àáạảãâầấậẩẫăằắặẳẵÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴ','e'=>'èéẹẻẽêềếệểễÈÉẸẺẼÊỀẾỆỂỄ','i'=>'ìíịỉĩÌÍỊỈĨ','o'=>'òóọỏõôồốộổỗơờớợởỡÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠ','u'=>'ùúụủũưừứựửữÙÚỤỦŨƯỪỨỰỬỮ','y'=>'ỳýỵỷỹỲÝỴỶỸ','d'=>'đĐ'];
+    static $map=null;
+    if($map===null) { $map=[]; foreach($groups as $ascii=>$letters) foreach(preg_split('//u',$letters,-1,PREG_SPLIT_NO_EMPTY) as $letter) $map[$letter]=$ascii; }
+    return strtolower(preg_replace('/[\x{0300}-\x{036f}]/u','',strtr($value,$map))??$value);
+}
+function searchPattern(string $value): string {
+    return '%'.strtr(searchFold(trim($value)),['\\'=>'\\\\','%'=>'\\%','_'=>'\\_']).'%';
+}
 function money(int $v): string { return number_format($v,0,',','.').' ₫'; }
 function user(): ?array {
     if(!isset($_SESSION['uid'])) return null;

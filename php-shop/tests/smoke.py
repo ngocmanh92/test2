@@ -64,6 +64,19 @@ with tempfile.TemporaryDirectory() as tmp:
             html=request(admin, '/?page=admin&tab=products')[1]
             assert '&lt;script&gt;alert(1)&lt;/script&gt;' in html and '<script>alert(1)</script>' not in html
             assert request(buyer, '/?page=quote')[0] == 200
+            quote_fields=dict(product_id=1,name='Quote Buyer',phone='()--()--',material='Đá trắng',dimensions='Cao 120 cm',location='Đà Nẵng',notes='Cần tư vấn bệ tượng',consent=1)
+            status, html, _ = post(buyer,'quote',quote_fields,'/?page=quote')
+            assert status==200 and 'Số điện thoại không hợp lệ' in html and 'Cần tư vấn bệ tượng' in html
+            quote_fields['phone']='0901234567'
+            # A failed mail enqueue must not leave a saved quote that a retry duplicates.
+            with sqlite3.connect(env['SHOP_DB']) as db:
+                db.execute("INSERT INTO site_settings(key,value) VALUES('notification_email','owner@example.test')")
+                db.execute("CREATE TRIGGER fail_mail BEFORE INSERT ON notifications BEGIN SELECT RAISE(ABORT,'test enqueue failure'); END")
+            status, html, _ = post(buyer,'quote',quote_fields,'/?page=quote')
+            assert status==200 and 'Không thể lưu dữ liệu' in html
+            with sqlite3.connect(env['SHOP_DB']) as db:
+                assert db.execute('SELECT COUNT(*) FROM quote_requests').fetchone()[0]==0
+                db.execute('DROP TRIGGER fail_mail')
             status, html, _ = post(buyer, 'quote', dict(product_id=1,name='Quote Buyer',phone='0901234567',material='Đá trắng',dimensions='Cao 120 cm',location='Đà Nẵng',notes='Cần tư vấn bệ tượng',consent=1), '/?page=quote')
             assert status == 200 and 'Đã nhận yêu cầu' in html
             html=request(admin, '/?page=admin&tab=quotes')[1]
@@ -85,6 +98,12 @@ with tempfile.TemporaryDirectory() as tmp:
             assert request(buyer, '/', {'csrf[]':'bad','action':'quote'})[0] == 400
             home=request(buyer)[1]
             assert '/assets/stone.css?v=' in home and 'mobile-menu' in home and 'skip-link' in home
+            for term in ['quan am','QUAN ÂM','quan âm']:
+                html=request(buyer,'/?'+urllib.parse.urlencode({'q':term}))[1]
+                assert '1 mẫu phù hợp' in html and 'Xoá bộ lọc' in html and '<article class="product">' in html
+            assert '0 mẫu phù hợp' in request(buyer,'/?q=%25')[1]
+            with sqlite3.connect(env['SHOP_DB']) as db:
+                assert db.execute('SELECT COUNT(*) FROM notifications').fetchone()[0]==1
             assert '<title>Tượng Quan Âm' in request(buyer, '/?page=product&id=1')[1]
             assert 'noindex,follow' in request(buyer, '/?q=Quan')[1]
             assert 'craft-feature' in home and 'buying-guide' in home and 'Tinh hoa từ đá.' in home

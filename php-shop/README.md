@@ -132,3 +132,13 @@ Tám ảnh trong `public/assets/references/` được lấy từ các tài nguy�
 Ảnh mẫu sản phẩm chỉ áp dụng cho sáu tên mẫu mặc định và chỉ khi trường ảnh sản phẩm trống; không gán nhầm cho sản phẩm mới. Danh mục hiển thị theo dữ liệu hiện tại, ưu tiên ảnh riêng có sẵn trong sản phẩm thuộc danh mục. CSS tham chiếu được giữ kèm lớp truy cập bàn phím/menu mobile/gallery của bản nâng cấp.
 
 Cập nhật GitHub không tự triển khai hoặc thay database trên website danonnuoc.net. Kiểm tra giao diện trên hosting sau khi đưa mã lên; môi trường kiểm thử hiện kiểm tra HTML, tài nguyên ảnh và chức năng, chưa có kiểm thử so sánh ảnh chụp tự động.
+
+## Rà soát giao diện và chức năng (25/10/2026)
+
+- Danh mục tìm theo tên hỗ trợ tiếng Việt có dấu/không dấu, chữ hoa/thường và Unicode tổ hợp; `%`, `_` được tìm như ký tự thông thường. Không cần extension intl/mbstring.
+- Hiển thị số mẫu phù hợp và liên kết xóa bộ lọc; tăng vùng chạm danh mục, chừa vùng an toàn cho nút báo giá trên điện thoại.
+- Điện thoại phải chứa 8–15 chữ số; ngày hết hạn mã giảm giá/báo giá phải là ngày lịch hợp lệ.
+- Phiếu yêu cầu và thông báo email được lưu trong cùng giao dịch: lỗi ghi hàng đợi sẽ hoàn tác phiếu, cho phép thử lại mà không để lại phiếu dở dang.
+- Kiểm thử tự động gồm hồi quy tìm kiếm, đầu vào sai, lỗi hàng đợi email, phân quyền, báo giá/in, CMS, ảnh, 2FA và phục hồi bản sao lưu.
+
+Đây là bản mã nguồn đã kiểm thử. Việc kiểm thử quản trị thực hiện trên database tạm; chưa xác nhận gửi email thật, cấu hình hosting, hoặc hiển thị trên thiết bị di động thật. Ảnh mẫu và nội dung nghệ nhân mặc định cần được chủ cơ sở xác nhận/thay bằng dữ liệu kinh doanh phù hợp trước khi công bố.

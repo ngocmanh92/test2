@@ -59,7 +59,7 @@ case 'quote_detail':
     db()->exec('BEGIN IMMEDIATE');
     try {
     $id=integer('quote_id',1); $shipping=integer('shipping'); $deposit=integer('deposit'); $date=trim((string)($_POST['valid_until']??''));
-    if($date!=='' && (!preg_match('/^\d{4}-\d{2}-\d{2}$/D',$date) || date('Y-m-d',strtotime($date))!==$date)) throw new DomainException('Ngày không hợp lệ.');
+    if($date!=='' && !validDate($date)) throw new DomainException('Ngày không hợp lệ.');
     [,,$subtotal]=quoteTotals($id); if($deposit>$subtotal+$shipping) throw new DomainException('Đặt cọc không được vượt tổng báo giá.');
     query('UPDATE quote_requests SET shipping=?,deposit=?,valid_until=?,internal_notes=? WHERE id=?',[$shipping,$deposit,$date,substr(trim((string)($_POST['internal_notes']??'')),0,10000),$id]); audit('quote.detail.save',(string)$id); db()->exec('COMMIT');
     } catch(Throwable $ex) { db()->exec('ROLLBACK'); throw $ex; }

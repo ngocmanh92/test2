@@ -30,12 +30,16 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
                 if (!empty($_POST['website'])) throw new DomainException('Không thể gửi yêu cầu.');
                 if (time()-(int)($_SESSION['last_quote']??0)<60) throw new DomainException('Vui lòng chờ một phút trước khi gửi lại.');
                 $phone=field('phone',20);
-                if (!preg_match('/^[+0-9 ()-]{8,20}$/',$phone)) throw new DomainException('Số điện thoại không hợp lệ.');
+                if (!validPhone($phone)) throw new DomainException('Số điện thoại không hợp lệ.');
                 if (!isset($_POST['consent'])) throw new DomainException('Cần đồng ý sử dụng thông tin để tư vấn.');
                 $pid=integer('product_id');
                 if ($pid && !query('SELECT id FROM products WHERE id=? AND active=1',[$pid])->fetch()) throw new DomainException('Mẫu sản phẩm không tồn tại.');
-                query('INSERT INTO quote_requests(product_id,name,phone,material,dimensions,location,notes) VALUES(?,?,?,?,?,?,?)',[$pid?:null,field('name',100),$phone,field('material',100),field('dimensions',200),field('location',300),field('notes',3000)]);
-                if(filter_var(setting('notification_email'),FILTER_VALIDATE_EMAIL)) queueMail(setting('notification_email'),'Có yêu cầu báo giá mới','Đăng nhập khu quản trị để xem yêu cầu mới.');
+                db()->beginTransaction();
+                try {
+                    query('INSERT INTO quote_requests(product_id,name,phone,material,dimensions,location,notes) VALUES(?,?,?,?,?,?,?)',[$pid?:null,field('name',100),$phone,field('material',100),field('dimensions',200),field('location',300),field('notes',3000)]);
+                    if(filter_var(setting('notification_email'),FILTER_VALIDATE_EMAIL)) queueMail(setting('notification_email'),'Có yêu cầu báo giá mới','Đăng nhập khu quản trị để xem yêu cầu mới.');
+                    db()->commit();
+                } catch(Throwable $ex) { db()->rollBack(); throw $ex; }
                 $_SESSION['last_quote']=time(); $_SESSION['quote_sent']=true; redirect('/?page=quote&sent=1');
             case 'quote_status':
                 requireUser(true); $status=field('status',20);
@@ -69,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
                 redirect('/?page=cart');
             case 'checkout':
                 $u=requireUser(); $phone=field('phone',20);
-                if (!preg_match('/^[+0-9 ()-]{8,20}$/',$phone)) throw new DomainException('Số điện thoại không hợp lệ.');
+                if (!validPhone($phone)) throw new DomainException('Số điện thoại không hợp lệ.');
                 $id=checkout((int)$u['id'],cart(),field('name',100),$phone,field('address',1000),field('payment',10),strtoupper(trim((string)($_POST['coupon']??''))));
                 $_SESSION['cart']=[]; redirect('/?page=order&id='.$id);
             case 'profile':
@@ -92,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
                 redirect('/?page=admin&tab=products');
             case 'coupon':
                 requireUser(true); $code=strtoupper(field('code',30)); $date=trim((string)($_POST['expires_at']??''));
-                if (!preg_match('/^[A-Z0-9_-]+$/',$code) || ($date!=='' && (!preg_match('/^\d{4}-\d{2}-\d{2}$/',$date) || date('Y-m-d',strtotime($date))!==$date))) throw new DomainException('Mã hoặc ngày hết hạn không hợp lệ.');
+                if (!preg_match('/^[A-Z0-9_-]+$/',$code) || ($date!=='' && !validDate($date))) throw new DomainException('Mã hoặc ngày hết hạn không hợp lệ.');
                 query('INSERT INTO coupons(code,percent,min_total,expires_at) VALUES(?,?,?,?)',[$code,integer('percent',1,100),integer('min_total'),$date?:null]); redirect('/?page=admin&tab=coupons');
             case 'coupon_toggle': requireUser(true); query('UPDATE coupons SET active=1-active WHERE id=?',[integer('id',1)]); redirect('/?page=admin&tab=coupons');
             case 'status': requireUser(true); orderStatus(integer('id',1),field('status',20)); redirect('/?page=order&id='.(int)$_POST['id']);
